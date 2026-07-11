@@ -42,14 +42,15 @@ export default function Navbar() {
         scrolled ? "bg-cream/90 backdrop-blur-md shadow-[0_1px_0_rgba(36,27,16,0.08)]" : "bg-transparent"
       }`}
     >
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-10">
-        <Link href="/" className="group flex items-center gap-3" data-cursor-hover>
-          <span className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-full border border-gold/60">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 sm:py-4 lg:px-10">
+        <Link href="/" className="group flex min-w-0 items-center gap-2 sm:gap-3" data-cursor-hover>
+          <span className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-full border border-gold/60 sm:h-12 sm:w-12">
             <Image src="/images/yugika-logo.jpg" alt="Yugika Foods Private Limited logo" fill className="object-cover" sizes="40px" />
           </span>
-          <span className="flex flex-col leading-none">
-            <span className="font-display text-lg tracking-wide text-pine-900">{company.legalName.toUpperCase()}</span>
-            {/* <span className="text-[10px] uppercase tracking-[0.28em] text-gold-deep">{company.headerTagline}</span> */}
+          <span className="flex min-w-0 flex-col leading-none">
+            <span className="font-display text-[0.8rem] tracking-wide text-pine-900 sm:text-lg">
+              {company.legalName.toUpperCase()}
+            </span>
           </span>
         </Link>
 
@@ -75,7 +76,7 @@ export default function Navbar() {
         </nav>
 
         <button
-          className="flex h-10 w-10 flex-col items-center justify-center gap-1.5 md:hidden"
+          className="ml-2 flex h-10 w-10 flex-shrink-0 flex-col items-center justify-center gap-1.5 md:hidden"
           onClick={() => setOpen((o) => !o)}
           aria-label="Toggle menu"
         >
@@ -90,7 +91,7 @@ export default function Navbar() {
           open ? "max-h-[32rem]" : "max-h-0"
         }`}
       >
-        <div className="flex flex-col gap-4 px-6 pb-6">
+        <div className="flex flex-col gap-4 px-4 pb-6 sm:px-6">
           <BrandSwitcher className="w-fit" />
           {LINKS.map((l) => (
             <Link key={l.href} href={l.href} onClick={() => setOpen(false)} className="text-base text-ink/80">

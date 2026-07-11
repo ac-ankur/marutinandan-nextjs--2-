@@ -56,11 +56,11 @@ export default function Hero() {
   }, []);
 
   return (
-    <section ref={rootRef} className="relative overflow-hidden pb-20 pt-40 lg:pb-32 lg:pt-52">
+    <section ref={rootRef} className="relative overflow-hidden pb-16 pt-28 sm:pb-20 sm:pt-40 lg:pb-32 lg:pt-52">
       <FloatingBlossoms />
 
-      <div className="mx-auto grid max-w-7xl items-center gap-16 px-6 lg:grid-cols-[1.15fr_0.85fr] lg:px-10">
-        <div>
+      <div className="mx-auto grid max-w-7xl items-center gap-10 px-4 sm:gap-16 sm:px-6 lg:grid-cols-[1.15fr_0.85fr] lg:px-10">
+        <div className="text-center sm:text-left">
           <div className="hero-eyebrow inline-flex items-center gap-2 rounded-full border border-pine-800/30 px-4 py-2 text-xs uppercase tracking-[0.2em] text-pine-800">
             <span className="h-1.5 w-1.5 rounded-full bg-gold" /> Est. Kachi Ghani · Cold Pressed
           </div>
@@ -83,7 +83,7 @@ export default function Hero() {
             reaches your kitchen.
           </p>
 
-          <div className="mt-9 flex flex-wrap items-center gap-4">
+          <div className="mt-9 flex flex-wrap items-center justify-center gap-4 sm:justify-start">
             <Link
               href="/products"
               data-cursor-hover
@@ -110,7 +110,7 @@ export default function Hero() {
           </div>
         </div>
 
-        <div className="relative mx-auto flex h-[420px] w-[420px] max-w-full items-center justify-center lg:h-[520px] lg:w-[520px]">
+        <div className="relative mx-auto flex h-[280px] w-full max-w-[320px] items-center justify-center sm:h-[360px] sm:max-w-[360px] lg:h-[520px] lg:w-[520px] lg:max-w-none">
           <div
             ref={ringRef}
             className="absolute inset-0 rounded-full border border-dashed border-gold-deep/40"
@@ -142,8 +142,8 @@ export default function Hero() {
         </div>
       </div>
 
-      <div className="mx-auto mt-16 max-w-7xl px-6 lg:px-10">
-        <div className="hero-pillars grid gap-px overflow-hidden rounded-3xl border border-pine-900/10 bg-pine-900/10 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mx-auto mt-14 max-w-7xl px-4 sm:mt-16 sm:px-6 lg:px-10">
+        <div className="hero-pillars grid gap-px overflow-hidden rounded-3xl border border-pine-900/10 bg-pine-900/10 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
           {PILLARS.map((p) => (
             <div key={p.title} className="group flex flex-col gap-3 bg-cream-paper p-6 transition-colors hover:bg-pine-900">
               <p.icon className="text-pine-800 transition-colors group-hover:text-gold-light" />

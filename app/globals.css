@@ -8,12 +8,21 @@
 
 html {
   scroll-behavior: auto;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
   background-color: #FBF3DF;
   color: #241B10;
+  min-width: 0;
   overflow-x: hidden;
+}
+
+img,
+svg,
+video {
+  max-width: 100%;
+  height: auto;
 }
 
 ::selection {

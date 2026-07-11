@@ -37,14 +37,14 @@ export default function VariantsToggle() {
   }, [active]);
 
   return (
-    <section className="bg-pine-900 px-6 py-24 lg:px-10 lg:py-32">
+    <section className="bg-pine-900 px-4 py-16 sm:px-6 sm:py-24 lg:px-10 lg:py-32">
       <div className="mx-auto max-w-7xl">
         <p className="text-center text-xs uppercase tracking-[0.3em] text-gold-light">— Two Variants —</p>
         <h2 className="mt-4 text-center font-display text-4xl text-cream sm:text-5xl">
           Choose your <span className="italic text-gold-light">character.</span>
         </h2>
 
-        <div className="mx-auto mt-10 flex w-fit rounded-full bg-pine-950/50 p-1.5">
+        <div className="mx-auto mt-10 flex w-full max-w-[320px] flex-wrap justify-center rounded-full bg-pine-950/50 p-1.5 sm:w-fit sm:max-w-none">
           {Object.values(variants).map((v) => (
             <button
               key={v.key}
@@ -59,7 +59,7 @@ export default function VariantsToggle() {
           ))}
         </div>
 
-        <div className="mt-16 grid items-center gap-16 lg:grid-cols-2">
+        <div className="mt-12 grid items-center gap-10 sm:mt-16 lg:grid-cols-2 lg:gap-16">
           <div ref={dropRef} className="relative mx-auto flex justify-center">
             <span className="absolute -top-8 left-6 text-2xl">✽</span>
             <span className="absolute right-8 top-0 text-xl">✽</span>

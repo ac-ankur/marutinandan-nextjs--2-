@@ -9,9 +9,9 @@ const STEPS = [
 
 export default function StoryTeaser() {
   return (
-    <section className="relative bg-cream px-6 py-24 lg:px-10 lg:py-32">
-      <div className="mx-auto grid max-w-7xl items-center gap-14 lg:grid-cols-2">
-        <RevealImage direction="left" className="h-[420px] rounded-3xl lg:h-[520px]">
+    <section className="relative bg-cream px-4 py-16 sm:px-6 sm:py-24 lg:px-10 lg:py-32">
+      <div className="mx-auto grid max-w-7xl items-center gap-10 lg:grid-cols-2 lg:gap-14">
+        <RevealImage direction="left" className="h-[280px] rounded-3xl sm:h-[360px] lg:h-[520px]">
           <div className="relative flex h-full w-full items-end bg-[linear-gradient(160deg,#5b3a2a,#2e1f18)] p-8">
             <div className="absolute right-6 top-6 flex h-16 w-16 items-center justify-center rounded-full bg-gold text-xs font-semibold text-pine-950">
               100% <br /> PURE
@@ -42,7 +42,7 @@ export default function StoryTeaser() {
             colour and nutrition intact. No heat refining. No chemicals. No shortcuts.
           </p>
 
-          <div className="mt-10 grid grid-cols-3 gap-6 border-t border-ink/10 pt-8">
+          <div className="mt-10 grid gap-6 border-t border-ink/10 pt-8 sm:grid-cols-3">
             {STEPS.map((s) => (
               <div key={s.n}>
                 <p className="font-display text-2xl text-gold-deep">{s.n}</p>

@@ -37,7 +37,7 @@ export default function ProductsGrid({ initialVariant = "all" }) {
 
   return (
     <div>
-      <div className="flex justify-center gap-2 rounded-full bg-cream-paper p-1.5 w-fit mx-auto">
+      <div className="mx-auto flex w-full max-w-[320px] flex-wrap justify-center gap-2 rounded-full bg-cream-paper p-1.5 sm:w-fit sm:max-w-none">
         {[
           { key: "all", label: "All" },
           { key: "black", label: "Black" },
@@ -46,7 +46,7 @@ export default function ProductsGrid({ initialVariant = "all" }) {
           <button
             key={t.key}
             onClick={() => setFilter(t.key)}
-            className={`rounded-full px-6 py-2.5 text-sm font-medium transition-colors ${
+            className={`rounded-full px-4 py-2 text-sm font-medium transition-colors sm:px-6 sm:py-2.5 ${
               filter === t.key ? "bg-pine-800 text-cream" : "text-ink/60 hover:text-ink"
             }`}
           >
@@ -55,7 +55,7 @@ export default function ProductsGrid({ initialVariant = "all" }) {
         ))}
       </div>
 
-      <div ref={gridRef} className="mt-14 grid gap-7 sm:grid-cols-2">
+      <div ref={gridRef} className="mt-10 grid gap-7 sm:mt-14 md:grid-cols-2">
         {filtered.map((group) => (
           <VariantCard key={group.variant} group={group} />
         ))}

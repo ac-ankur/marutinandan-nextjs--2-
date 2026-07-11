@@ -56,6 +56,13 @@ export const metadata = {
   alternates: { canonical: "/" },
 };
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  viewportFit: "cover",
+};
+
 const orgSchema = {
   "@context": "https://schema.org",
   "@type": "Organization",
@@ -80,7 +87,7 @@ export default function RootLayout({ children }) {
         <BrandProvider>
           <SmoothScroll>
             <Navbar />
-            <main>{children}</main>
+            <main className="overflow-x-hidden">{children}</main>
             <Footer />
           </SmoothScroll>
         </BrandProvider>

@@ -9,7 +9,7 @@ export default function Footer() {
   const { brand } = useBrand();
 
   return (
-    <footer className="bg-pine-950 px-6 pb-10 pt-16 text-cream/80 lg:px-10">
+    <footer className="bg-pine-950 px-4 pb-10 pt-16 text-cream/80 sm:px-6 lg:px-10">
       <div className="mx-auto grid max-w-7xl gap-12 md:grid-cols-[1.4fr_1fr_1fr]">
         <div>
           <div className="flex items-center gap-3">

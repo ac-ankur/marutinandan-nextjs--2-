@@ -46,7 +46,7 @@ export default function EnquiryForm({ defaultProduct = "" }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-3xl bg-cream-paper p-8 shadow-[0_30px_80px_-40px_rgba(21,56,38,0.35)] lg:p-10">
+    <form onSubmit={handleSubmit} className="rounded-3xl bg-cream-paper p-5 shadow-[0_30px_80px_-40px_rgba(21,56,38,0.35)] sm:p-8 lg:p-10">
       {/* honeypot field, hidden from real users */}
       <input type="text" name="company_website" tabIndex={-1} autoComplete="off" className="hidden" />
 
