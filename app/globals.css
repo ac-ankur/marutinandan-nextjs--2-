@@ -41,6 +41,23 @@ video {
   50% { transform: translateY(-14px); }
 }
 
+@keyframes scroll-loop {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@layer components {
+  .scroll-loop {
+    display: flex;
+    gap: 1.5rem;
+    animation: scroll-loop 30s linear infinite;
+  }
+
+  .gallery-card {
+    min-width: 20rem;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.001ms !important;
