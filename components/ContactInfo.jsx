@@ -7,9 +7,23 @@ export default function ContactInfo() {
 
   return (
     <div className="space-y-4">
-      <Row icon="📞" label="Call / WhatsApp" value={`${brand.name} Sales`} />
-      <Row icon="✉️" label="Email" value={`orders@${brand.name.toLowerCase()}.in`} />
-      <Row icon="📍" label="Origin" value="Made in India · FSSAI Compliant" />
+      <Row
+        icon="📍"
+        label="Address"
+        value="Khasra No.498 Ganesh Dham Colony Mudi Jahangeer Puri Etmadpur Agra 283202"
+      />
+      <Row icon="✉️" label="Email" value="yugikafoods@gmail.com" />
+      <Row
+        icon="📞"
+        label="Customer Care"
+        value={
+          <>
+            +91 90587 04491
+            <br />
+            +91 98284 07444
+          </>
+        }
+      />
     </div>
   );
 }
