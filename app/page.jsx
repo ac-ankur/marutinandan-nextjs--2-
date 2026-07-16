@@ -25,7 +25,7 @@ export default function HomePage() {
       <VariantsToggle />
       <HorizontalGallery items={products} />
       
-      <section className="bg-cream px-6 py-24 lg:px-10">
+      <section className="bg-cream px-6 py-12 lg:px-10">
         <div className="mx-auto max-w-5xl text-center">
           <p className="text-xs uppercase tracking-[0.3em] text-gold-deep">— Coming Soon —</p>
           <h2 className="mt-4 font-display text-4xl text-pine-900 sm:text-5xl">
@@ -44,10 +44,10 @@ export default function HomePage() {
 
       <StoryTeaser />
 
-      <section className="bg-pine-950 px-6 py-24 lg:px-10 lg:py-32">
+      <section className="bg-pine-950 px-6 py-12 lg:px-10 lg:py-24">
         <div className="mx-auto max-w-6xl">
           <LabReportTable />
-          <div className="mt-10 text-center">
+          <div className="mt-6 text-center">
             <Link
               href="/lab-report"
               data-cursor-hover

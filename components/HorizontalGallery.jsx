@@ -3,7 +3,6 @@
 import Link from "next/link";
 
 export default function HorizontalGallery({ items }) {
-  const loopItems = [...items, ...items];
 
   return (
     <section className="relative overflow-hidden bg-pine-950 py-24">
@@ -16,36 +15,33 @@ export default function HorizontalGallery({ items }) {
         </div>
       </div>
 
-      <div className="overflow-hidden">
-        <div className="scroll-loop whitespace-nowrap py-12">
-          {loopItems.map((item, index) => (
-            <Link
-              href={`/products/${item.slug}`}
-              key={`${item.slug}-${index}`}
-              data-cursor-hover
-              className="gallery-card group relative inline-flex h-[420px] w-[300px] flex-col justify-end overflow-hidden rounded-3xl border border-cream/10 bg-gradient-to-b from-pine-800 to-pine-900 p-7 text-left transition-transform hover:-translate-y-1 lg:h-[480px] lg:w-[340px]"
-            >
-              <div
-                className="absolute right-6 top-6 h-24 w-24 rounded-full opacity-80 blur-2xl"
-                style={{ background: item.variantData.accent }}
-              />
-              <div className="relative z-10 mb-6 flex justify-center">
-                <DropletIcon color={item.variantData.accent} />
+      <div className="flex w-full gap-6 overflow-x-auto snap-x snap-mandatory py-8 px-6 lg:px-10 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+        {items.map((item, index) => (
+          <Link
+            href={`/products/${item.slug}`}
+            key={`${item.slug}-${index}`}
+            data-cursor-hover
+            className="gallery-card group relative flex h-[420px] w-[85vw] max-w-[300px] shrink-0 snap-center flex-col justify-end overflow-hidden rounded-3xl border border-cream/10 bg-gradient-to-b from-pine-800 to-pine-900 p-7 text-left whitespace-normal transition-transform hover:-translate-y-1 lg:h-[480px] lg:w-[340px] lg:max-w-[340px]"
+          >
+            <div
+              className="absolute right-6 top-6 h-24 w-24 rounded-full opacity-80 blur-2xl"
+              style={{ background: item.variantData.accent }}
+            />
+            <div className="relative z-10 mb-6 flex justify-center">
+              <DropletIcon color={item.variantData.accent} />
+            </div>
+            <div className="relative z-10">
+              <p className="text-xs uppercase tracking-[0.25em] text-gold-light">
+                {item.size} · {item.stockUnit}
+              </p>
+              <h3 className="mt-2 font-display text-2xl text-cream">{item.variantData.name}</h3>
+              <p className="mt-2 text-sm text-cream/60">{item.variantData.tagline}</p>
+              <div className="mt-5 flex items-center justify-end border-t border-cream/10 pt-4">
+                <span className="text-xs text-cream/70 group-hover:text-cream">View SKU →</span>
               </div>
-              <div className="relative z-10">
-                <p className="text-xs uppercase tracking-[0.25em] text-gold-light">
-                  {item.size} · {item.stockUnit}
-                </p>
-                <h3 className="mt-2 font-display text-2xl text-cream">{item.variantData.name}</h3>
-                <p className="mt-2 text-sm text-cream/60">{item.variantData.tagline}</p>
-                <div className="mt-5 flex items-center justify-between border-t border-cream/10 pt-4">
-                  <span className="font-display text-lg text-gold-light">₹{item.mrp}</span>
-                  <span className="text-xs text-cream/70 group-hover:text-cream">View SKU →</span>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
+            </div>
+          </Link>
+        ))}
       </div>
     </section>
   );

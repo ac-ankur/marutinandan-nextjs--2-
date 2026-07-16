@@ -54,7 +54,7 @@ export default function Hero() {
   }, []);
 
   return (
-    <section ref={rootRef} className="relative overflow-hidden pb-16 pt-28 sm:pb-20 sm:pt-40 lg:pb-32 lg:pt-52">
+    <section ref={rootRef} className="relative overflow-hidden pb-8 pt-16 sm:pb-12 sm:pt-16 lg:pb-24 lg:pt-24">
       <FloatingBlossoms />
 
       <div className="mx-auto grid max-w-7xl items-center gap-10 px-4 sm:gap-16 sm:px-6 lg:grid-cols-[1.15fr_0.85fr] lg:px-10">
@@ -155,12 +155,12 @@ export default function Hero() {
         </div>
       </div>
 
-      <div className="mt-16 flex justify-center">
+      {/* <div className="mt-16 flex justify-center">
         <div className="flex flex-col items-center gap-2 text-xs uppercase tracking-[0.3em] text-ink/40">
           <span>Scroll</span>
           <span className="h-8 w-px animate-pulse bg-ink/30" />
         </div>
-      </div>
+      </div> */}
     </section>
   );
 }

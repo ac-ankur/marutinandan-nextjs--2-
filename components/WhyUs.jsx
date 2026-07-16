@@ -47,7 +47,7 @@ export default function WhyUs() {
   }, []);
 
   return (
-    <section className="bg-cream px-6 py-24 lg:px-10 lg:py-32">
+    <section className="bg-cream px-6 py-8 lg:px-10 lg:py-8">
       <div className="mx-auto max-w-7xl">
         <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
           <div>

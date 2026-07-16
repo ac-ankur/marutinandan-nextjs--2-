@@ -9,7 +9,7 @@ const STEPS = [
 
 export default function StoryTeaser() {
   return (
-    <section className="relative bg-cream px-4 py-16 sm:px-6 sm:py-24 lg:px-10 lg:py-32">
+    <section className="relative bg-cream px-4 py-12 sm:px-6 sm:py-16 lg:px-10 lg:py-24">
       <div className="mx-auto grid max-w-7xl items-center gap-10 lg:grid-cols-2 lg:gap-14">
         <RevealImage direction="left" className="h-[280px] rounded-3xl sm:h-[360px] lg:h-[520px]">
           <div className="relative flex h-full w-full items-end bg-[linear-gradient(160deg,#5b3a2a,#2e1f18)] p-8">
