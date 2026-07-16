@@ -1,29 +1,24 @@
 "use client";
 
-import { useBrand } from "./BrandProvider";
 
 export default function ContactInfo() {
-  const { brand } = useBrand();
-
   return (
     <div className="space-y-4">
       <Row
         icon="📍"
         label="Address"
-        value="Khasra No.498 Ganesh Dham Colony Mudi Jahangeer Puri Etmadpur Agra 283202"
-      />
-      <Row icon="✉️" label="Email" value="yugikafoods@gmail.com" />
-      <Row
-        icon="📞"
-        label="Customer Care"
         value={
           <>
-            +91 90587 04491
-            <br />
-            +91 98284 07444
+            Yugika Foods Private Limited<br/>
+            Khasra No. 498, Ganeshdham Colony<br/>
+            Mudi Jahangeerpuri, Etmadpur<br/>
+            Agra – 282005, UP, India
           </>
         }
       />
+      <Row icon="📞" label="Phone" value="+91 90587 04492" />
+      <Row icon="✉️" label="Email" value="yugikafoods@gmail.com" />
+      <Row icon="🌐" label="Website" value="www.yugikafoods.com" />
     </div>
   );
 }

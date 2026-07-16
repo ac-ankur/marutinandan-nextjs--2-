@@ -3,15 +3,13 @@
 import { useEffect, useRef } from "react";
 import Link from "next/link";
 import gsap from "gsap";
-import { useBrand } from "./BrandProvider";
 
-const BADGES = ["Cold Pressed", "Chemical Free", "Cholesterol Free", "FSSAI Compliant", "Lab Tested"];
+const BADGES = ["100% Pure & Natural", "Cold Pressed", "No Chemical Refining", "No Artificial Preservatives"];
 
 export default function Hero() {
   const rootRef = useRef(null);
   const dropRef = useRef(null);
   const ringRef = useRef(null);
-  const { brand } = useBrand();
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -62,25 +60,24 @@ export default function Hero() {
       <div className="mx-auto grid max-w-7xl items-center gap-10 px-4 sm:gap-16 sm:px-6 lg:grid-cols-[1.15fr_0.85fr] lg:px-10">
         <div className="text-center sm:text-left">
           <div className="hero-eyebrow inline-flex items-center gap-2 rounded-full border border-pine-800/30 px-4 py-2 text-xs uppercase tracking-[0.2em] text-pine-800">
-            <span className="h-1.5 w-1.5 rounded-full bg-gold" /> Est. Kachi Ghani · Cold Pressed
+            <span className="h-1.5 w-1.5 rounded-full bg-gold" /> Ghar Ghar Ka Tel
           </div>
 
           <h1 className="mt-8 font-display leading-[0.95] text-pine-900 text-[clamp(2.75rem,9vw,6.5rem)]">
             <span className="block overflow-hidden">
-              <span className="hero-line block">{brand.fullName}</span>
+              <span className="hero-line block">Pure. Honest.</span>
+            </span>
+            <span className="block overflow-hidden">
+              <span className="hero-line block text-gold-deep italic">Cold-Pressed.</span>
             </span>
           </h1>
 
-          <p className="hero-sub mt-4 font-display text-3xl italic text-ink/70 sm:text-4xl">
-            Pure Cold Pressed <span className="text-gold-deep">Mustard Oil</span>
+          <p className="hero-sub mt-4 font-display text-3xl text-ink/70 sm:text-4xl">
+            Premium Cold-Pressed <span className="text-pine-800">Edible Oils</span> for Healthy Everyday Cooking
           </p>
 
           <p className="hero-copy mt-6 max-w-lg text-base leading-relaxed text-ink/70">
-            <strong className="text-pine-800">Zero heat. Zero chemicals. Zero adulteration.</strong> Just
-            mustard seed, single-pressed at room temperature the traditional{" "}
-            <strong className="text-pine-800">Kachi Ghani</strong> way — so nothing is lost in processing,
-            and nothing is ever added back. Every batch is verified by an NABL-accredited lab before it
-            reaches your kitchen.
+            At <strong>Yugika Foods Private Limited</strong>, we believe that good health begins with pure ingredients. Our premium cold-pressed edible oils are produced using advanced low-temperature extraction methods that preserve natural nutrients, authentic aroma, and rich flavour—bringing wholesome goodness to every kitchen.
           </p>
 
           <div className="mt-9 flex flex-wrap items-center justify-center gap-4 sm:justify-start">
@@ -89,15 +86,15 @@ export default function Hero() {
               data-cursor-hover
               className="hero-cta group inline-flex items-center gap-2 rounded-full bg-pine-800 px-7 py-3.5 text-sm font-medium text-cream transition-all hover:bg-pine-700"
             >
-              Explore Our Range
+              Explore Products
               <span className="transition-transform group-hover:translate-x-1">→</span>
             </Link>
             <Link
-              href="/contact"
+              href="/about"
               data-cursor-hover
               className="hero-cta rounded-full border border-pine-800/40 px-7 py-3.5 text-sm font-medium text-pine-900 transition-colors hover:bg-pine-900 hover:text-cream"
             >
-              Order Now
+              Learn More
             </Link>
           </div>
 

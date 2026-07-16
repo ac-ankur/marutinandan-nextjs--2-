@@ -8,20 +8,20 @@ gsap.registerPlugin(ScrollTrigger);
 
 const REASONS = [
   {
-    title: "Single Cold Press",
-    desc: "Kachi Ghani milling keeps oil under low friction heat — nutrients and aroma stay locked in.",
+    title: "Traditional Cold-Pressed Extraction",
+    desc: "Every drop is extracted at low temperatures to preserve natural nutrients, antioxidants, aroma, and flavour.",
   },
   {
-    title: "Zero Additives",
-    desc: "No hexane, no refining chemicals, no argemone oil, no mineral oil. Just the seed.",
+    title: "Carefully Selected Seeds",
+    desc: "We source premium-quality seeds from trusted suppliers to ensure consistent quality and purity.",
   },
   {
-    title: "Batch-Tested Purity",
-    desc: "Every batch is verified by an NABL & ISO/IEC 17025 accredited lab before it reaches you.",
+    title: "Naturally Nutritious",
+    desc: "Our oils retain their natural goodness without harsh refining or chemical solvent extraction.",
   },
   {
-    title: "Farm-Direct Sourcing",
-    desc: "Seeds are sourced directly from trusted growing belts, pressed close to harvest.",
+    title: "Quality You Can Trust",
+    desc: "From sourcing to packaging, every batch is produced under stringent quality and hygiene standards.",
   },
 ];
 
@@ -53,7 +53,7 @@ export default function WhyUs() {
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-gold-deep">— Why Us —</p>
             <h2 className="mt-4 max-w-lg font-display text-4xl leading-tight text-pine-900 sm:text-5xl">
-              What makes every bottle <span className="italic text-gold-deep">different.</span>
+              Why Choose <span className="italic text-gold-deep">Yugika Foods?</span>
             </h2>
           </div>
         </div>

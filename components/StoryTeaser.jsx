@@ -31,15 +31,13 @@ export default function StoryTeaser() {
 
         <div>
           <p className="flex items-center gap-3 text-xs uppercase tracking-[0.3em] text-gold-deep">
-            <span className="h-px w-8 bg-gold-deep" /> Our Story
+            <span className="h-px w-8 bg-gold-deep" /> Our Promise
           </p>
           <h2 className="mt-4 font-display text-4xl leading-tight text-pine-900 sm:text-5xl">
-            Pressed the way <span className="italic text-gold-deep">tradition</span> intended.
+            Purity isn't just a claim—it's our <span className="italic text-gold-deep">foundation.</span>
           </h2>
           <p className="mt-6 max-w-xl text-base leading-relaxed text-ink/70">
-            For generations, mustard oil has been the soul of Indian kitchens. We honour that heritage with
-            Kachi Ghani — the ancient, low-temperature single-press method that keeps the seed&apos;s aroma,
-            colour and nutrition intact. No heat refining. No chemicals. No shortcuts.
+            At Yugika Foods, purity isn't just a claim—it's the foundation of everything we do. We are committed to delivering naturally processed edible oils that combine traditional wisdom with modern quality standards.
           </p>
 
           <div className="mt-10 grid gap-6 border-t border-ink/10 pt-8 sm:grid-cols-3">
@@ -53,11 +51,11 @@ export default function StoryTeaser() {
           </div>
 
           <Link
-            href="/story"
+            href="/about"
             data-cursor-hover
             className="mt-10 inline-flex items-center gap-2 text-sm font-medium text-pine-800 underline decoration-gold decoration-2 underline-offset-4"
           >
-            Read the full story →
+            Learn more about us →
           </Link>
         </div>
       </div>

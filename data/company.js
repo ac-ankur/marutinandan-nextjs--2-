@@ -57,19 +57,24 @@ export const brands = {
 
 export const futureProducts = [
   {
-    key: "peanut-oil",
-    name: "Yugika Gold Cold Pressed Peanut Oil",
+    key: "groundnut-oil",
+    name: "Groundnut Oil",
     status: "Coming Soon",
-    description:
-      "A new cold pressed peanut oil line launching under the Yugika Gold sub-brand — same single-press philosophy, a nuttier, everyday oil for global kitchens.",
-    image: "/images/yugika-gold-peanut-oil.png",
+    description: "Premium cold-pressed groundnut oil, naturally processed for a rich and wholesome flavour.",
+    image: null,
   },
   {
     key: "sesame-oil",
-    name: "Cold Pressed Sesame Seed Oil",
+    name: "Sesame Oil",
     status: "Coming Soon",
-    description:
-      "Cold pressed sesame (til) oil is next in line — rich, nutty, and pressed with the same purity standards as our mustard oil range.",
+    description: "Cold pressed sesame oil, rich, nutty, and pressed with the same purity standards.",
+    image: null,
+  },
+  {
+    key: "sunflower-oil",
+    name: "Sunflower Oil",
+    status: "Coming Soon",
+    description: "Naturally processed cold-pressed sunflower oil, perfect for healthy everyday cooking.",
     image: null,
   },
 ];

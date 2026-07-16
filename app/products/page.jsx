@@ -1,9 +1,9 @@
 import ProductsGrid from "@/components/ProductsGrid";
 
 export const metadata = {
-  title: "Products — Black & Yellow Cold Pressed Mustard Oil",
+  title: "Products — Premium Cold-Pressed Edible Oils",
   description:
-    "Browse Marutinandan's full range of cold pressed Kachi Ghani mustard oil — Black and Yellow variants in 1L, 2L, 5L and 15L pack sizes.",
+    "Browse Yugika Foods' full range of premium cold-pressed edible oils — naturally processed, combining traditional extraction with modern quality standards.",
   alternates: { canonical: "/products" },
 };
 
@@ -13,13 +13,12 @@ export default function ProductsPage({ searchParams }) {
   return (
     <div className="bg-cream px-6 pb-24 pt-36 lg:px-10 lg:pt-44">
       <div className="mx-auto max-w-3xl text-center">
-        <p className="text-xs uppercase tracking-[0.3em] text-gold-deep">Our Range</p>
+        <p className="text-xs uppercase tracking-[0.3em] text-gold-deep">Products</p>
         <h1 className="mt-5 font-display text-5xl leading-tight text-pine-900 sm:text-6xl">
-          Every bottle, <span className="italic text-gold-deep">every size.</span>
+          Premium <span className="italic text-gold-deep">Cold-Pressed</span> Edible Oils
         </h1>
         <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-ink/70">
-          Choose between our sharp, aromatic Black Mustard Oil or the milder, everyday Yellow — each
-          available in 1L, 2L, 5L and 15L packs.
+          Yugika Foods proudly offers naturally processed edible oils that combine traditional extraction with modern quality standards.
         </p>
       </div>
 

@@ -8,10 +8,11 @@ import BrandSwitcher from "./BrandSwitcher";
 import { company } from "@/data/company";
 
 const LINKS = [
-  { href: "/story", label: "Story" },
+  { href: "/about", label: "About" },
   { href: "/products", label: "Products" },
-  { href: "/lab-report", label: "Lab Report" },
-  { href: "/about", label: "About Us" },
+  { href: "/our-process", label: "Our Process" },
+  { href: "/lab-report", label: "Quality" },
+  { href: "/why-cold-pressed", label: "Why Cold-Pressed" },
   { href: "/contact", label: "Contact" },
 ];
 
@@ -65,7 +66,6 @@ export default function Navbar() {
               {l.label}
             </Link>
           ))}
-          <BrandSwitcher />
           <Link
             href="/contact"
             data-cursor-hover
@@ -92,7 +92,6 @@ export default function Navbar() {
         }`}
       >
         <div className="flex flex-col gap-4 px-4 pb-6 sm:px-6">
-          <BrandSwitcher className="w-fit" />
           {LINKS.map((l) => (
             <Link key={l.href} href={l.href} onClick={() => setOpen(false)} className="text-base text-ink/80">
               {l.label}

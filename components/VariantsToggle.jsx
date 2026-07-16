@@ -39,9 +39,9 @@ export default function VariantsToggle() {
   return (
     <section className="bg-pine-900 px-4 py-16 sm:px-6 sm:py-24 lg:px-10 lg:py-32">
       <div className="mx-auto max-w-7xl">
-        <p className="text-center text-xs uppercase tracking-[0.3em] text-gold-light">— Two Variants —</p>
+        <p className="text-center text-xs uppercase tracking-[0.3em] text-gold-light">— Our Products —</p>
         <h2 className="mt-4 text-center font-display text-4xl text-cream sm:text-5xl">
-          Choose your <span className="italic text-gold-light">character.</span>
+          Currently <span className="italic text-gold-light">Available.</span>
         </h2>
 
         <div className="mx-auto mt-10 flex w-full max-w-[320px] flex-wrap justify-center rounded-full bg-pine-950/50 p-1.5 sm:w-fit sm:max-w-none">

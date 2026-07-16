@@ -2,11 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useBrand } from "./BrandProvider";
 import { company } from "@/data/company";
 
 export default function Footer() {
-  const { brand } = useBrand();
 
   return (
     <footer className="bg-pine-950 px-4 pb-10 pt-16 text-cream/80 sm:px-6 lg:px-10">
@@ -18,28 +16,24 @@ export default function Footer() {
             </span>
             <div>
               <p className="font-display text-lg text-cream">{company.legalName}</p>
-              <p className="text-[10px] uppercase tracking-[0.28em] text-gold-light">{company.headerTagline}</p>
+              <p className="text-[10px] uppercase tracking-[0.28em] text-gold-light">Premium Cold-Pressed Edible Oils</p>
             </div>
           </div>
           <p className="mt-5 max-w-sm text-sm leading-relaxed text-cream/60">
             Bringing you 100% pure cold pressed mustard oil, pressed the traditional Kachi Ghani way.
             Chemical-free. Lab-tested. Honestly delicious.
           </p>
-          <p className="mt-4 text-xs text-cream/40">
-            Currently browsing as <span className="text-cream/70">{brand.name}</span> ({brand.market}) ·{" "}
-            <Link href="/about" className="underline decoration-gold-light/50 hover:text-cream">
-              About {company.shortName}
-            </Link>
-          </p>
         </div>
 
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gold-light">Explore</p>
           <ul className="mt-4 space-y-3 text-sm">
-            <li><Link href="/story" className="hover:text-cream">Our Story</Link></li>
-            <li><Link href="/products" className="hover:text-cream">Products</Link></li>
-            <li><Link href="/lab-report" className="hover:text-cream">Lab Report</Link></li>
+            <li><Link href="/" className="hover:text-cream">Home</Link></li>
             <li><Link href="/about" className="hover:text-cream">About Us</Link></li>
+            <li><Link href="/products" className="hover:text-cream">Products</Link></li>
+            <li><Link href="/our-process" className="hover:text-cream">Our Process</Link></li>
+            <li><Link href="/lab-report" className="hover:text-cream">Quality</Link></li>
+            <li><Link href="/why-cold-pressed" className="hover:text-cream">Why Cold-Pressed</Link></li>
             <li><Link href="/contact" className="hover:text-cream">Contact</Link></li>
           </ul>
         </div>
