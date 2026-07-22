@@ -14,7 +14,7 @@ export default function AboutPage() {
       <div className="mx-auto max-w-4xl text-center">
         <p className="text-xl uppercase tracking-[0.3em] text-gold-deep">About Yugika Foods</p>
         <h1 className="mt-5 font-display text-5xl leading-tight text-pine-900 sm:text-6xl">
-          Pure. Honest. <span className="italic text-gold-deep">Cold-Pressed.</span>
+          100% Pure. Natural. <span className="italic text-gold-deep">Cold-Pressed.</span>
         </h1>
         <div className="mx-auto mt-8 flex max-w-3xl flex-col gap-6 text-base leading-relaxed text-ink/75">
           <p>
