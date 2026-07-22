@@ -52,7 +52,7 @@ export default function WhyUs() {
         <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-gold-deep">— Why Us —</p>
-            <h2 className="mt-4 max-w-lg font-display text-4xl leading-tight text-pine-900 sm:text-5xl">
+            <h2 className="mt-4  font-display text-4xl leading-tight text-pine-900 sm:text-5xl">
               Why Choose <span className="italic text-gold-deep">Yugika Foods?</span>
             </h2>
           </div>

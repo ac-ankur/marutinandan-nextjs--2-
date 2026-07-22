@@ -10,10 +10,10 @@ export const metadata = {
 
 export default function ContactPage() {
   return (
-    <div className="bg-cream px-6 pb-24 pt-36 lg:px-10 lg:pt-44">
+    <div className="bg-cream px-6 pb-24 pt-36 lg:px-10 lg:pt-36">
       <div className="mx-auto grid max-w-6xl gap-14 lg:grid-cols-2">
         <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-gold-deep">— Contact Us —</p>
+          <p className="text-xl uppercase tracking-[0.3em] text-gold-deep">Contact Us </p>
           <h1 className="mt-5 font-display text-5xl leading-tight text-pine-900 sm:text-6xl">
             Get in <span className="italic text-gold-deep">Touch.</span>
           </h1>

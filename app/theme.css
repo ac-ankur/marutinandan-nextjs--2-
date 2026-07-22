@@ -1,0 +1,19 @@
+/*
+ * Yugika brand palette
+ * Change these values to retheme the complete site.  Values are RGB triplets
+ * so Tailwind can keep using opacity modifiers, e.g. bg-pine-800/90.
+ */
+:root {
+  --color-cream: 255 248 232;
+  --color-cream-deep: 248 235 202;
+  --color-cream-paper: 255 253 247;
+  --color-ink: 57 46 27;
+  --color-pine-950: 10 72 35;
+  --color-pine-900: 14 97 45;
+  --color-pine-800: 24 126 57;
+  --color-pine-700: 38 145 67;
+  --color-pine-600: 74 161 66;
+  --color-gold: 239 167 13;
+  --color-gold-light: 255 202 67;
+  --color-gold-deep: 205 126 0;
+}

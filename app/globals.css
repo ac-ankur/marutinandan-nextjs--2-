@@ -1,3 +1,5 @@
+@import "./theme.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -12,8 +14,8 @@ html {
 }
 
 body {
-  background-color: #FBF3DF;
-  color: #241B10;
+  background-color: rgb(var(--color-cream));
+  color: rgb(var(--color-ink));
   min-width: 0;
   overflow-x: hidden;
 }
@@ -26,8 +28,8 @@ video {
 }
 
 ::selection {
-  background: #D3A02E;
-  color: #0F2B1E;
+  background: rgb(var(--color-gold));
+  color: rgb(var(--color-pine-950));
 }
 
 @layer components {

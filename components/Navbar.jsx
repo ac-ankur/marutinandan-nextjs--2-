@@ -19,14 +19,6 @@ const LINKS = [
 export default function Navbar() {
   const navRef = useRef(null);
   const [open, setOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 40);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
 
   useEffect(() => {
     gsap.fromTo(
@@ -39,17 +31,15 @@ export default function Navbar() {
   return (
     <header
       ref={navRef}
-      className={`fixed inset-x-0 top-0 z-50 transition-colors duration-300 ${
-        scrolled ? "bg-cream/90 backdrop-blur-md shadow-[0_1px_0_rgba(36,27,16,0.08)]" : "bg-transparent"
-      }`}
+      className="fixed inset-x-0 top-0 z-50 bg-cream/90 backdrop-blur-md shadow-[0_1px_0_rgba(36,27,16,0.08)]"
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 sm:py-4 lg:px-10">
         <Link href="/" className="group flex min-w-0 items-center gap-2 sm:gap-3" data-cursor-hover>
-          <span className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-full border border-gold/60 sm:h-12 sm:w-12">
-            <Image src="/images/yugika-logo.jpg" alt="Yugika Foods Private Limited logo" fill className="object-cover" sizes="40px" />
+          <span className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-full border border-gold/60 sm:h-14 sm:w-14">
+            <Image src="/images/yugika-logo.jpg" alt="Yugika Foods Private Limited logo" fill className="object-cover" sizes="76px" />
           </span>
           <span className="flex min-w-0 flex-col leading-none">
-            <span className="font-display text-[0.8rem] tracking-wide text-pine-900 sm:text-lg">
+            <span className="font-display text-[1.25rem] tracking-wide text-pine-900 sm:text-lg">
               {company.legalName.toUpperCase()}
             </span>
           </span>

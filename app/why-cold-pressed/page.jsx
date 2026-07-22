@@ -17,9 +17,9 @@ export default function WhyColdPressedPage() {
   ];
 
   return (
-    <div className="bg-cream px-6 pb-24 pt-36 lg:px-10 lg:pt-44">
+    <div className="bg-cream px-6 pb-24 pt-36 lg:px-10 lg:pt-36">
       <div className="mx-auto max-w-4xl text-center">
-        <p className="text-xs uppercase tracking-[0.3em] text-gold-deep">Why Cold-Pressed?</p>
+        <p className="text-xl uppercase tracking-[0.3em] text-gold-deep">Why Cold-Pressed?</p>
         <h1 className="mt-5 font-display text-5xl leading-tight text-pine-900 sm:text-6xl">
           Closer to <span className="italic text-gold-deep">nature.</span>
         </h1>

@@ -1,4 +1,6 @@
 /** @type {import('tailwindcss').Config} */
+const alpha = (name) => `rgb(var(--color-${name}) / <alpha-value>)`;
+
 module.exports = {
   content: [
     "./app/**/*.{js,jsx}",
@@ -9,22 +11,22 @@ module.exports = {
     extend: {
       colors: {
         cream: {
-          DEFAULT: "#FBF3DF",
-          deep: "#F3E7C6",
-          paper: "#FFFDF7",
+          DEFAULT: alpha("cream"),
+          deep: alpha("cream-deep"),
+          paper: alpha("cream-paper"),
         },
-        ink: "#241B10",
+        ink: alpha("ink"),
         pine: {
-          950: "#0F2B1E",
-          900: "#153826",
-          800: "#1B4530",
-          700: "#215539",
-          600: "#2C6C48",
+          950: alpha("pine-950"),
+          900: alpha("pine-900"),
+          800: alpha("pine-800"),
+          700: alpha("pine-700"),
+          600: alpha("pine-600"),
         },
         gold: {
-          DEFAULT: "#D3A02E",
-          light: "#F0CB6E",
-          deep: "#A97C1C",
+          DEFAULT: alpha("gold"),
+          light: alpha("gold-light"),
+          deep: alpha("gold-deep"),
         },
       },
       fontFamily: {

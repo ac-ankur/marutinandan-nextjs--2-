@@ -1,4 +1,5 @@
 import Link from "next/link";
+import ProcessTimeline from "./ProcessTimeline";
 
 export const metadata = {
   title: "Our Process — Yugika Foods Private Limited",
@@ -41,9 +42,9 @@ export default function OurProcessPage() {
   ];
 
   return (
-    <div className="bg-cream px-6 pb-24 pt-36 lg:px-10 lg:pt-44">
+    <div className="bg-cream px-6 pb-24 pt-36 lg:px-10 lg:pt-34">
       <div className="mx-auto max-w-4xl text-center">
-        <p className="text-xs uppercase tracking-[0.3em] text-gold-deep">Our Process</p>
+        <p className="text-xl uppercase tracking-[0.3em] text-gold-deep">Our Process</p>
         <h1 className="mt-5 font-display text-5xl leading-tight text-pine-900 sm:text-6xl">
           From Seed to <span className="italic text-gold-deep">Bottle.</span>
         </h1>
@@ -53,16 +54,7 @@ export default function OurProcessPage() {
       </div>
 
       <div className="mx-auto mt-20 max-w-4xl">
-        <div className="relative border-l border-gold-light/40 pl-8 ml-4 sm:pl-12 sm:ml-6 space-y-12">
-          {steps.map((s, idx) => (
-            <div key={idx} className="relative">
-              <span className="absolute -left-[41px] top-1 flex h-5 w-5 items-center justify-center rounded-full bg-cream border-4 border-gold-deep sm:-left-[57px] sm:h-6 sm:w-6" />
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gold-deep">{s.step}</p>
-              <h3 className="mt-2 font-display text-2xl text-pine-900">{s.title}</h3>
-              <p className="mt-3 max-w-2xl text-base leading-relaxed text-ink/70">{s.desc}</p>
-            </div>
-          ))}
-        </div>
+        <ProcessTimeline steps={steps} />
       </div>
 
       <div className="mx-auto mt-24 max-w-2xl text-center">
