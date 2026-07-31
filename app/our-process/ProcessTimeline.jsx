@@ -18,8 +18,114 @@ export default function ProcessTimeline({ steps }) {
   );
 }
 
-/* ---------------- Desktop: zigzag with measured SVG path ---------------- */
+/* ---------------- Ambient Step Visuals Component ---------------- */
+function StepBackgroundVisuals({ index }) {
+  const containerRef = useRef(null);
 
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      const targets = containerRef.current?.querySelectorAll("[data-anim]");
+      if (!targets || targets.length === 0) return;
+
+      // Animate based on the specific phase type
+      if (index === 0) {
+        // Wheat / Farmland: Floating seeds lifting upwards gently
+        gsap.fromTo(targets, 
+          { y: 30, opacity: 0, scale: 0.5 },
+          { y: -20, opacity: 0.6, scale: 1, duration: 2, stagger: 0.3, repeat: -1, yoyo: true, ease: "sine.inOut" }
+        );
+      } else if (index === 1) {
+        // Filter / Cleaning: Particles falling through a barrier line
+        gsap.fromTo(targets,
+          { y: -10, opacity: 0 },
+          { y: 40, opacity: [0, 0.8, 0], duration: 1.5, stagger: 0.2, repeat: -1, ease: "power1.in" }
+        );
+      } else if (index === 2) {
+        // Droplets: Vertical dripping motion
+        gsap.fromTo(targets,
+          { y: -15, scaleY: 0.3, opacity: 0 },
+          { y: 35, scaleY: 1, opacity: 1, duration: 1.2, stagger: 0.4, repeat: -1, ease: "bounce.out" }
+        );
+      } else if (index === 3) {
+        // Waves: Concentric ripple expansions
+        gsap.fromTo(targets,
+          { scale: 0.4, opacity: 0.8 },
+          { scale: 1.8, opacity: 0, duration: 2.2, stagger: 0.5, repeat: -1, ease: "power1.out" }
+        );
+      } else if (index === 4) {
+        // Flask / Processing: Micro bubbles rising
+        gsap.fromTo(targets,
+          { y: 20, x: "random(-10, 10)", opacity: 0 },
+          { y: -30, opacity: 0.7, duration: 1.8, stagger: 0.2, repeat: -1, ease: "power2.out" }
+        );
+      } else if (index === 5) {
+        // Package / Check: Conveyor slide/pulse indicator
+        gsap.fromTo(targets,
+          { x: -20, opacity: 0 },
+          { x: 20, opacity: 0.9, duration: 1.4, repeat: -1, ease: "sine.inOut" }
+        );
+      }
+    }, containerRef);
+
+    return () => ctx.revert();
+  }, [index]);
+
+  return (
+    <div ref={containerRef} className="absolute inset-0 pointer-events-none overflow-hidden select-none z-0 opacity-40">
+      {/* Step 0: Wheat Seeds */}
+      {index === 0 && (
+        <>
+          <span data-anim className="absolute top-4 left-6 w-2 h-3 bg-gold-deep rounded-full transform rotate-45" />
+          <span data-anim className="absolute top-8 right-12 w-2 h-3 bg-gold-deep rounded-full transform -rotate-12" />
+          <span data-anim className="absolute bottom-2 left-1/3 w-2 h-3 bg-gold-deep rounded-full transform rotate-12" />
+        </>
+      )}
+
+      {/* Step 1: Filter Cleaning Particles */}
+      {index === 1 && (
+        <div className="absolute inset-x-0 top-1/2 flex justify-around px-4">
+          <span data-anim className="w-1.5 h-1.5 bg-pine-600 rounded-full" />
+          <span data-anim className="w-2 h-2 bg-gold-deep rounded-full" />
+          <span data-anim className="w-1 h-1 bg-pine-800 rounded-full" />
+        </div>
+      )}
+
+      {/* Step 2: Liquid Droplets */}
+      {index === 2 && (
+        <div className="absolute right-4 top-2 flex flex-col gap-6">
+          <span data-anim className="w-2 h-4 bg-pine-600 rounded-full" />
+          <span data-anim className="w-2 h-4 bg-gold-deep rounded-full" />
+        </div>
+      )}
+
+      {/* Step 3: Waves / Ripping Rings */}
+      {index === 3 && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div data-anim className="absolute w-24 h-24 border border-pine-500 rounded-full" />
+          <div data-anim className="absolute w-24 h-24 border border-gold-deep rounded-full" />
+        </div>
+      )}
+
+      {/* Step 4: Processing Bubbles */}
+      {index === 4 && (
+        <div className="absolute bottom-4 left-1/4 flex gap-8">
+          <span data-anim className="w-2 h-2 border border-pine-700 rounded-full" />
+          <span data-anim className="w-3 h-3 border border-gold-deep rounded-full" />
+          <span data-anim className="w-1.5 h-1.5 border border-pine-900 rounded-full" />
+        </div>
+      )}
+
+      {/* Step 5: Package / Check Lines */}
+      {index === 5 && (
+        <div className="absolute bottom-2 left-6 right-6 h-0.5 bg-gold-light/20">
+          <div data-anim className="w-4 h-full bg-gold-deep rounded" />
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ---------------- Desktop: zigzag with measured SVG path ---------------- */
 function DesktopZigzag({ steps }) {
   const containerRef = useRef(null);
   const pathRef = useRef(null);
@@ -58,9 +164,6 @@ function DesktopZigzag({ steps }) {
   };
 
   useLayoutEffect(() => {
-    // Measure immediately, then again on the next couple of frames and once
-    // fonts finish loading — text reflow after font swap shifts dot
-    // positions, and a single measurement can catch stale layout.
     computePath();
     const raf1 = requestAnimationFrame(() => {
       computePath();
@@ -80,14 +183,11 @@ function DesktopZigzag({ steps }) {
       ro.disconnect();
       window.removeEventListener("resize", computePath);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [steps]);
 
   useEffect(() => {
     if (!pathD) return;
 
-    // Recalculate ScrollTrigger positions any time the measured path
-    // (and therefore layout) changes.
     const ctx = gsap.context(() => {
       stepRefs.current.forEach((el, i) => {
         if (!el) return;
@@ -187,10 +287,10 @@ function DesktopZigzag({ steps }) {
               className="grid grid-cols-[1fr_64px_1fr] items-center gap-6 lg:gap-10"
             >
               <div className={fromLeft ? "text-right" : ""}>
-                {fromLeft && <StepCard s={s} Icon={Icon} align="right" />}
+                {fromLeft && <StepCard s={s} Icon={Icon} align="right" index={idx} />}
               </div>
 
-              <div className="flex justify-center">
+              <div className="flex justify-center z-10">
                 <span
                   ref={(el) => (dotRefs.current[idx] = el)}
                   className="h-6 w-6 rounded-full border-4 border-gold-deep bg-cream shadow-sm"
@@ -198,7 +298,7 @@ function DesktopZigzag({ steps }) {
               </div>
 
               <div>
-                {!fromLeft && <StepCard s={s} Icon={Icon} align="left" />}
+                {!fromLeft && <StepCard s={s} Icon={Icon} align="left" index={idx} />}
               </div>
             </div>
           );
@@ -208,17 +308,20 @@ function DesktopZigzag({ steps }) {
   );
 }
 
-function StepCard({ s, Icon, align }) {
+function StepCard({ s, Icon, align, index }) {
   const isRight = align === "right";
   return (
-    <div className={`inline-flex max-w-md items-start gap-4 ${isRight ? "flex-row-reverse text-right" : ""}`}>
+    <div className={`relative inline-flex max-w-md items-start gap-4 p-4 rounded-xl bg-cream/30 border border-transparent hover:border-gold-light/20 transition-colors duration-300 ${isRight ? "flex-row-reverse text-right" : ""}`}>
+      {/* Background Micro-Animation Canvas */}
+      <StepBackgroundVisuals index={index} />
+      
       <span
         data-icon
-        className="mt-1 flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-pine-800 text-cream shadow-sm"
+        className="mt-1 flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-pine-800 text-cream shadow-sm z-10"
       >
         <Icon size={22} strokeWidth={1.75} />
       </span>
-      <div>
+      <div className="z-10">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gold-deep">{s.step}</p>
         <h3 className="mt-2 font-display text-2xl text-pine-900">{s.title}</h3>
         <p className="mt-3 text-base leading-relaxed text-ink/70">{s.desc}</p>
@@ -228,7 +331,6 @@ function StepCard({ s, Icon, align }) {
 }
 
 /* ---------------- Mobile: simple straight timeline ---------------- */
-
 function MobileTimeline({ steps }) {
   const containerRef = useRef(null);
   const lineRef = useRef(null);
@@ -284,13 +386,17 @@ function MobileTimeline({ steps }) {
         {steps.map((s, idx) => {
           const Icon = icons[idx % icons.length];
           return (
-            <div key={idx} ref={(el) => (stepRefs.current[idx] = el)} className="relative">
-              <span className="absolute -left-[41px] top-1 flex h-8 w-8 items-center justify-center rounded-full border-4 border-gold-deep bg-pine-800 text-cream">
+            <div key={idx} ref={(el) => (stepRefs.current[idx] = el)} className="relative p-3 rounded-lg bg-cream/20">
+              <StepBackgroundVisuals index={idx} />
+              
+              <span className="absolute -left-[41px] top-4 flex h-8 w-8 items-center justify-center rounded-full border-4 border-gold-deep bg-pine-800 text-cream z-10">
                 <Icon size={16} strokeWidth={1.75} />
               </span>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gold-deep">{s.step}</p>
-              <h3 className="mt-2 font-display text-2xl text-pine-900">{s.title}</h3>
-              <p className="mt-3 text-base leading-relaxed text-ink/70">{s.desc}</p>
+              <div className="z-10 relative">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gold-deep">{s.step}</p>
+                <h3 className="mt-2 font-display text-2xl text-pine-900">{s.title}</h3>
+                <p className="mt-3 text-base leading-relaxed text-ink/70">{s.desc}</p>
+              </div>
             </div>
           );
         })}
