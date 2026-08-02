@@ -79,7 +79,7 @@ export const variants = {
 export const labFootnote =
   "BLQ = Below Limit of Quantification · NMT = Not More Than · NLT = Not Less Than. Test reference: FSSR-2011 / IS:548. Report ref. FAST LABS FL/04/026.";
 
-export const labLab = "FAST LABS (Food Analysis & Sample Testing Laboratories) — NABL & ISO/IEC 17025 accredited";
+export const labLab = "FAST LABS (Food Analysis & Sample Testing Laboratories) — NABL accredited";
 
 const PACK_META = {
   "1l": {
@@ -139,8 +139,8 @@ const SHORT_LISTING = {
 };
 
 const MRP = {
-  black: { "1l": 285, "2l": 545, "5l": 1299, "15l": 3599 },
-  yellow: { "1l": 265, "2l": 505, "5l": 1199, "15l": 3349 },
+  black: { "1l": 265, "2l": 530, "5l": 1325, "15l": 3975 },
+  yellow: { "1l": 285, "2l": 575, "5l": 1425, "15l": 4275 },
 };
 
 const SIZES = ["1l", "2l", "5l", "15l"];

@@ -23,7 +23,7 @@ const CHAPTERS = [
   {
     tag: "03 — The Bottle",
     title: "Sealed only after it's proven.",
-    body: "Before a single bottle is sealed, the batch is verified at an NABL & ISO/IEC 17025 accredited lab against FSSAI standards for moisture, rancidity, acid value and more.",
+    body: "Before a single bottle is sealed, the batch is verified at an NABL accredited lab against FSSAI standards for moisture, rancidity, acid value and more.",
     direction: "left",
   },
 ];
@@ -47,9 +47,8 @@ export default function StoryPage() {
         {CHAPTERS.map((c) => (
           <div
             key={c.tag}
-            className={`grid items-center gap-12 lg:grid-cols-2 ${
-              c.direction === "right" ? "lg:[&>*:first-child]:order-2" : ""
-            }`}
+            className={`grid items-center gap-12 lg:grid-cols-2 ${c.direction === "right" ? "lg:[&>*:first-child]:order-2" : ""
+              }`}
           >
             <RevealImage direction={c.direction} className="h-[360px] rounded-3xl lg:h-[440px]">
               <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(160deg,#1B4530,#0F2B1E)]">

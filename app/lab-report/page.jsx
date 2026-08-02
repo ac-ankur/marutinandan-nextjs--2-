@@ -3,7 +3,7 @@ import LabReportTable from "@/components/LabReportTable";
 export const metadata = {
   title: "Lab Report — NABL Tested Purity",
   description:
-    "View Marutinandan's independently verified lab test results for Black and Yellow cold pressed mustard oil, certified by an NABL & ISO/IEC 17025 accredited laboratory.",
+    "View Marutinandan's independently verified lab test results for Black and Yellow cold pressed mustard oil, certified by an NABL accredited laboratory.",
   alternates: { canonical: "/lab-report" },
 };
 
@@ -16,7 +16,7 @@ export default function LabReportPage() {
           Purity, <span className="italic text-gold-deep">quantified.</span>
         </h1>
         <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-ink/70">
-          Independently tested and certified by FAST LABS — a NABL &amp; ISO/IEC 17025 accredited laboratory.
+          Independently tested and certified by FAST LABS — a NABL &amp;  accredited laboratory.
           Every parameter, transparent.
         </p>
       </div>

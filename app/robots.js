@@ -1,4 +1,4 @@
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.marutinandan.in";
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.yugikafoods.com";
 
 export default function robots() {
   return {

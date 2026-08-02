@@ -20,7 +20,7 @@ const body = Jost({
   weight: ["300", "400", "500", "600"],
 });
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.marutinandan.in";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.yugikafoods.com";
 
 export const metadata = {
   metadataBase: new URL(SITE_URL),
@@ -43,7 +43,7 @@ export const metadata = {
     description:
       "100% pure, cold pressed Kachi Ghani mustard oil. No heat, no chemicals, no solvents. NABL lab-tested.",
     url: SITE_URL,
-    siteName: "Marutinandan",
+    siteName: "Yugika Foods Private Limited",
     locale: "en_IN",
     type: "website",
   },
@@ -66,11 +66,11 @@ export const viewport = {
 const orgSchema = {
   "@context": "https://schema.org",
   "@type": "Organization",
-  name: "Marutinandan",
+  name: "Yugika Foods Private Limited",
   url: SITE_URL,
-  logo: `${SITE_URL}/images/logo.png`,
+  logo: `${SITE_URL}/images/yugika-logo.jpg`,
   description:
-    "Marutinandan produces 100% pure cold pressed Kachi Ghani mustard oil, NABL lab-tested and FSSAI compliant.",
+    "Yugika Foods Private Limited manufactures Marutinandan, 100% pure cold pressed Kachi Ghani mustard oil, NABL lab-tested and FSSAI compliant.",
   sameAs: [],
 };
 

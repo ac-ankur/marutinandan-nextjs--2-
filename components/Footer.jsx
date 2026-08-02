@@ -43,7 +43,7 @@ export default function Footer() {
           <ul className="mt-4 space-y-3 text-sm text-cream/70">
             <li>FSSAI Compliant</li>
             <li>NABL Lab Tested</li>
-            <li>ISO/IEC 17025</li>
+
             <li>Kachi Ghani Cold Pressed</li>
           </ul>
         </div>
