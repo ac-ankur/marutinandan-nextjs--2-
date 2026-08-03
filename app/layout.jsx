@@ -38,6 +38,14 @@ export const metadata = {
     "pure mustard oil India",
     "Marutinandan",
   ],
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon.jpg", type: "image/jpeg", sizes: "612x619" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: "/apple-icon.jpg",
+  },
   openGraph: {
     title: "Marutinandan — Pure Cold Pressed Mustard Oil",
     description:
@@ -46,11 +54,20 @@ export const metadata = {
     siteName: "Yugika Foods Private Limited",
     locale: "en_IN",
     type: "website",
+    images: [
+      {
+        url: "/images/yugika-logo.jpg",
+        width: 612,
+        height: 619,
+        alt: "Yugika Foods Logo",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Marutinandan — Pure Cold Pressed Mustard Oil",
     description: "100% pure, cold pressed Kachi Ghani mustard oil. NABL lab-tested, FSSAI compliant.",
+    images: ["/images/yugika-logo.jpg"],
   },
   robots: { index: true, follow: true },
   alternates: { canonical: "/" },
