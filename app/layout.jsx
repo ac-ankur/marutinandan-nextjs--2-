@@ -41,10 +41,10 @@ export const metadata = {
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
-      { url: "/icon.jpg", type: "image/jpeg", sizes: "612x619" },
+      { url: "/icon.jpeg", type: "image/jpeg", sizes: "612x619" },
     ],
     shortcut: "/favicon.ico",
-    apple: "/apple-icon.jpg",
+    apple: "/apple-icon.jpeg",
   },
   openGraph: {
     title: "Marutinandan — Pure Cold Pressed Mustard Oil",

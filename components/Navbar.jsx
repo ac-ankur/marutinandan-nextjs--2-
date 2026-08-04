@@ -33,13 +33,15 @@ export default function Navbar() {
       ref={navRef}
       className="fixed inset-x-0 top-0 z-50 bg-cream/90 backdrop-blur-md shadow-[0_1px_0_rgba(36,27,16,0.08)]"
     >
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 sm:py-4 lg:px-10">
-        <Link href="/" className="group flex min-w-0 items-center gap-2 sm:gap-3" data-cursor-hover>
-          <span className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-full border border-gold/60 sm:h-14 sm:w-14">
-            <Image src="/images/yugika-logo.jpg" alt="Yugika Foods Private Limited logo" fill className="object-cover" sizes="76px" />
-          </span>
-          <span className="flex min-w-0 flex-col leading-none">
-            <span className="font-display text-[1.25rem] tracking-wide text-pine-900 sm:text-lg">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-2.5 sm:px-6 sm:py-3 lg:px-10">
+        <Link href="/" className="group flex min-w-0 items-center gap-3 sm:gap-4" data-cursor-hover>
+          <div className="relative flex-shrink-0 rounded-full bg-white p-1.5 shadow-md shadow-pine-950/15 ring-2 ring-gold/70 border border-gold/40 group-hover:scale-105 group-hover:shadow-lg group-hover:ring-gold transition-all duration-300">
+            <span className="relative block h-14 w-14 overflow-hidden rounded-full sm:h-18 sm:w-18">
+              <Image src="/images/yugika-logo.jpg" alt="Yugika Foods Private Limited logo" fill className="object-cover" sizes="96px" priority />
+            </span>
+          </div>
+          <span className="flex min-w-0 flex-col leading-tight">
+            <span className="font-display text-base font-bold tracking-wide text-pine-900 sm:text-xl group-hover:text-pine-700 transition-colors">
               {company.legalName.toUpperCase()}
             </span>
           </span>

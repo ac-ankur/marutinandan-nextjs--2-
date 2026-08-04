@@ -7,6 +7,7 @@ import LabReportTable from "@/components/LabReportTable";
 import EnquiryForm from "@/components/EnquiryForm";
 import ContactInfo from "@/components/ContactInfo";
 import Link from "next/link";
+import Testimonials from "@/components/Testimonials";
 import { getAllProducts } from "@/data/products";
 import { futureProducts } from "@/data/company";
 
@@ -43,6 +44,8 @@ export default function HomePage() {
       </section>
 
       <StoryTeaser />
+
+      <Testimonials />
 
       <section className="bg-pine-950 px-6 py-12 lg:px-10 lg:py-24">
         <div className="mx-auto max-w-6xl">

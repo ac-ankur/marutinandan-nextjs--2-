@@ -10,13 +10,15 @@ export default function Footer() {
     <footer className="bg-pine-950 px-4 pb-10 pt-16 text-cream/80 sm:px-6 lg:px-10">
       <div className="mx-auto grid max-w-7xl gap-12 md:grid-cols-[1.4fr_1fr_1fr]">
         <div>
-          <div className="flex items-center gap-3">
-            <span className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-full border border-gold/60">
-              <Image src="/images/yugika-logo.jpg" alt="Yugika Foods Private Limited logo" fill className="object-cover" sizes="40px" />
-            </span>
+          <div className="flex items-center gap-3.5 sm:gap-4">
+            <div className="relative flex-shrink-0 rounded-full bg-white p-1 shadow-md shadow-black/25 ring-2 ring-gold/70 border border-gold/40">
+              <span className="relative block h-14 w-14 overflow-hidden rounded-full sm:h-16 sm:w-16">
+                <Image src="/images/yugika-logo.jpg" alt="Yugika Foods Private Limited logo" fill className="object-cover" sizes="80px" />
+              </span>
+            </div>
             <div>
-              <p className="font-display text-lg text-cream">{company.legalName}</p>
-              <p className="text-[10px] uppercase tracking-[0.28em] text-gold-light">Premium Cold-Pressed Edible Oils</p>
+              <p className="font-display text-xl font-bold text-cream sm:text-2xl">{company.legalName}</p>
+              <p className="text-xs font-medium uppercase tracking-[0.25em] text-gold-light mt-0.5">Ghar Ghar Ka Tel</p>
             </div>
           </div>
           <p className="mt-5 max-w-sm text-sm leading-relaxed text-cream/60">
