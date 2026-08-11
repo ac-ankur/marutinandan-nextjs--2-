@@ -13,6 +13,16 @@ import { futureProducts } from "@/data/company";
 
 export const metadata = {
   title: "Yugika Foods Private Limited — Premium Cold-Pressed Edible Oils",
+  description:
+    "Shop Marutinandan pure cold-pressed mustard oil (sarso ka tel / Kachi Ghani). Black and yellow mustard oil, carefully processed for authentic taste and quality.",
+  keywords: [
+    "mustard oil",
+    "sarso ka tel",
+    "pure mustard oil",
+    "kachi ghani mustard oil",
+    "cold pressed mustard oil",
+    "best mustard oil",
+  ],
   alternates: { canonical: "/" },
 };
 

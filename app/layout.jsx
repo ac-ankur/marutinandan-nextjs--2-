@@ -33,6 +33,13 @@ export const metadata = {
   keywords: [
     "cold pressed mustard oil",
     "kachi ghani mustard oil",
+    "sarso ka tel",
+    "sarson ka tel",
+    "mustard oil",
+    "pure mustard oil",
+    "best mustard oil",
+    "affordable mustard oil",
+    "mustard oil online India",
     "black mustard oil",
     "yellow mustard oil",
     "pure mustard oil India",

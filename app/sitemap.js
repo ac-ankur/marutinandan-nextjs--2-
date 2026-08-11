@@ -7,6 +7,8 @@ export default function sitemap() {
     "",
     "/story",
     "/products",
+    "/why-cold-pressed",
+    "/our-process",
     "/lab-report",
     "/about",
     "/contact",

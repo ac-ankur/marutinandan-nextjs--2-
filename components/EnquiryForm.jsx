@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import gsap from "gsap";
+import { CheckCircle2, X } from "lucide-react";
 import { getAllProducts } from "@/data/products";
 
 export default function EnquiryForm({ defaultProduct = "" }) {
@@ -105,10 +106,27 @@ export default function EnquiryForm({ defaultProduct = "" }) {
       </div>
 
       {status === "success" && (
-        <p ref={successRef} className="mt-5 rounded-xl bg-pine-800/10 px-4 py-3 text-sm text-pine-800">
-          Thank you — we&apos;ve received your enquiry and will reach out shortly.
-        </p>
+        <div
+          ref={successRef}
+          role="status"
+          aria-live="polite"
+          className="fixed inset-x-4 top-28 z-[60] mx-auto flex max-w-lg items-center gap-3 rounded-2xl border border-pine-700/20 bg-pine-800 px-4 py-4 text-cream shadow-[0_20px_60px_-20px_rgba(21,56,38,0.6)] sm:inset-x-auto sm:right-6 sm:top-32 sm:w-[32rem] sm:px-5"
+        >
+          <CheckCircle2 className="h-6 w-6 flex-shrink-0 text-gold-light" aria-hidden="true" />
+          <p className="flex-1 text-sm font-medium leading-relaxed">
+            Thank you! Your enquiry has been received. We&apos;ll reach out shortly.
+          </p>
+          <button
+            type="button"
+            onClick={() => setStatus("idle")}
+            className="rounded-full p-1 text-cream/75 transition-colors hover:bg-white/10 hover:text-cream"
+            aria-label="Dismiss confirmation"
+          >
+            <X className="h-5 w-5" aria-hidden="true" />
+          </button>
+        </div>
       )}
+
       {status === "error" && (
         <p className="mt-5 rounded-xl bg-red-100 px-4 py-3 text-sm text-red-700">{error}</p>
       )}
