@@ -4,8 +4,7 @@ import VariantsToggle from "@/components/VariantsToggle";
 import HorizontalGallery from "@/components/HorizontalGallery";
 import WhyUs from "@/components/WhyUs";
 import LabReportTable from "@/components/LabReportTable";
-import EnquiryForm from "@/components/EnquiryForm";
-import ContactInfo from "@/components/ContactInfo";
+import EnquirySection from "@/components/EnquirySection";
 import Link from "next/link";
 import Testimonials from "@/components/Testimonials";
 import { getAllProducts } from "@/data/products";
@@ -72,25 +71,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section id="order" className="bg-cream px-6 py-24 lg:px-10 lg:py-32">
-        <div className="mx-auto grid max-w-6xl gap-14 lg:grid-cols-2">
-          <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-gold-deep">— Contact Us —</p>
-            <h2 className="mt-4 font-display text-4xl leading-tight text-pine-900 sm:text-5xl">
-              Get in <span className="italic text-gold-deep">Touch.</span>
-            </h2>
-            <p className="mt-6 max-w-md text-base leading-relaxed text-ink/70">
-              We&apos;d love to hear from you. Whether you&apos;re a customer, distributor, retailer, or business partner, our team is here to assist you.
-            </p>
-
-            <div className="mt-9">
-              <ContactInfo />
-            </div>
-          </div>
-
-          <EnquiryForm />
-        </div>
-      </section>
+      <EnquirySection />
     </>
   );
 }

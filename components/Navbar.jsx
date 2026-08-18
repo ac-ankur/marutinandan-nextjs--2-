@@ -70,11 +70,21 @@ export default function Navbar() {
           : "bg-transparent shadow-none"
       }`}
     >
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 sm:py-3.5 lg:px-10">
+      <div className={`mx-auto flex max-w-7xl items-center justify-between px-4 transition-all duration-300 ${
+        scrolled
+          ? "py-2 sm:py-2.5 lg:px-10"
+          : "py-3 sm:py-3.5 lg:px-10"
+      }`}>
         <Link href="/" className="group flex min-w-0 items-center gap-3 sm:gap-4" data-cursor-hover>
           {/* Logo */}
-          <div className="relative flex-shrink-0 rounded-full border border-gold/50 bg-white p-0.5 shadow-lg shadow-pine-950/20 ring-2 ring-gold/70 transition-all duration-300 group-hover:scale-105 group-hover:shadow-xl group-hover:ring-gold">
-            <span className="relative block h-14 w-14 overflow-hidden rounded-full sm:h-[4.5rem] sm:w-[4.5rem] lg:h-20 lg:w-20">
+          <div className={`relative flex-shrink-0 rounded-full border border-gold/50 bg-white p-0.5 shadow-lg shadow-pine-950/20 ring-2 ring-gold/70 transition-all duration-300 group-hover:scale-105 group-hover:shadow-xl group-hover:ring-gold ${
+            scrolled ? "scale-90" : "scale-100"
+          }`}>
+            <span className={`relative block overflow-hidden rounded-full transition-all duration-300 ${
+              scrolled
+                ? "h-10 w-10 sm:h-12 sm:w-12 lg:h-14 lg:w-14"
+                : "h-14 w-14 sm:h-[4.5rem] sm:w-[4.5rem] lg:h-20 lg:w-20"
+            }`}>
               <Image
                 src="/images/yugika-logo.jpg"
                 alt="Yugika Foods Private Limited logo"
@@ -87,15 +97,21 @@ export default function Navbar() {
           </div>
 
           {/* Divider */}
-          <span className="hidden h-10 w-px flex-shrink-0 bg-gold/40 sm:block lg:h-12" aria-hidden="true" />
+          <span className={`hidden flex-shrink-0 w-px bg-gold/40 transition-all duration-300 sm:block ${
+            scrolled ? "h-6 lg:h-8" : "h-10 lg:h-12"
+          }`} aria-hidden="true" />
 
           {/* Brand lockup: big bold word + small tracked suffix, single line each */}
           <span className="flex min-w-0 flex-col justify-center leading-none">
-            <span className="whitespace-nowrap font-display text-2xl font-bold tracking-wide text-pine-900 drop-shadow-[0_1px_0_rgba(255,255,255,0.75)] transition-colors group-hover:text-pine-700 sm:text-3xl lg:text-[2.5rem]">
+            <span className={`whitespace-nowrap font-display font-bold tracking-wide text-pine-900 drop-shadow-[0_1px_0_rgba(255,255,255,0.75)] transition-all duration-300 group-hover:text-pine-700 ${
+              scrolled ? "text-lg sm:text-xl lg:text-2xl" : "text-2xl sm:text-3xl lg:text-[2.5rem]"
+            }`}>
               {brandWord}
             </span>
             {brandSuffix && (
-              <span className="mt-1 whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.3em] text-pine-700/80 sm:text-xs lg:mt-1.5 lg:text-[0.8rem] lg:tracking-[0.35em]">
+              <span className={`mt-1 whitespace-nowrap font-semibold uppercase tracking-[0.3em] text-pine-700/80 transition-all duration-300 ${
+                scrolled ? "text-[8px] sm:text-[9px] lg:text-[0.7rem] lg:tracking-[0.3em]" : "text-[10px] sm:text-xs lg:mt-1.5 lg:text-[0.8rem] lg:tracking-[0.35em]"
+              }`}>
                 {brandSuffix}
               </span>
             )}

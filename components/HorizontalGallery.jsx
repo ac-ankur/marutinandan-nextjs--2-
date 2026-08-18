@@ -1,8 +1,72 @@
 "use client";
 
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function HorizontalGallery({ items }) {
+  const [activeHover, setActiveHover] = useState(null);
+  const [activeFocusedIndex, setActiveFocusedIndex] = useState(0);
+
+  // Track hover position for individual card zoom lens
+  const [zoomPos, setZoomPos] = useState({ x: 50, y: 50, pxX: 0, pxY: 0 });
+  const [tilt, setTilt] = useState({ rx: 0, ry: 0 });
+
+  const cardRefs = useRef([]);
+
+  // IntersectionObserver to handle the 3D focus animation on mobile scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const index = Number(entry.target.getAttribute("data-index"));
+            setActiveFocusedIndex(index);
+          }
+        });
+      },
+      {
+        threshold: 0.6, // Card must be 60% visible to trigger focus
+      }
+    );
+
+    cardRefs.current.forEach((ref) => {
+      if (ref) observer.observe(ref);
+    });
+
+    return () => observer.disconnect();
+  }, [items]);
+
+  const handleMouseMove = (e, index) => {
+    const card = cardRefs.current[index];
+    if (!card) return;
+
+    const rect = card.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+
+    // Percent coordinates for zoom image positioning
+    const percentX = (mouseX / rect.width) * 100;
+    const percentY = (mouseY / rect.height) * 100;
+
+    // Subtle 3D tilt calculation based on cursor relative to card center
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    const rotateX = -((mouseY - centerY) / centerY) * 8; // Max 8 deg rotation
+    const rotateY = ((mouseX - centerX) / centerX) * 8;
+
+    setActiveHover(index);
+    setTilt({ rx: rotateX, ry: rotateY });
+    setZoomPos({ x: percentX, y: percentY, pxX: mouseX, pxY: mouseY });
+  };
+
+  const handleMouseLeave = () => {
+    setActiveHover(null);
+    setTilt({ rx: 0, ry: 0 });
+  };
+
+  const LENS_SIZE = 130;
+  const ZOOM_LEVEL = 2.2;
 
   return (
     <section className="relative overflow-hidden bg-pine-950 py-24">
@@ -15,46 +79,88 @@ export default function HorizontalGallery({ items }) {
         </div>
       </div>
 
-      <div className="flex w-full gap-6 overflow-x-auto snap-x snap-mandatory py-8 px-6 lg:px-10 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
-        {items.map((item, index) => (
-          <Link
-            href={`/products/${item.slug}`}
-            key={`${item.slug}-${index}`}
-            data-cursor-hover
-            className="gallery-card group relative flex h-[420px] w-[85vw] max-w-[300px] shrink-0 snap-center flex-col justify-end overflow-hidden rounded-3xl border border-cream/10 bg-gradient-to-b from-pine-800 to-pine-900 p-7 text-left whitespace-normal transition-transform hover:-translate-y-1 lg:h-[480px] lg:w-[340px] lg:max-w-[340px]"
-          >
-            <div
-              className="absolute right-6 top-6 h-24 w-24 rounded-full opacity-80 blur-2xl"
-              style={{ background: item.variantData.accent }}
-            />
-            <div className="relative z-10 mb-6 flex justify-center">
-              <DropletIcon color={item.variantData.accent} />
-            </div>
-            <div className="relative z-10">
-              <p className="text-xs uppercase tracking-[0.25em] text-gold-light">
-                {item.size} · {item.stockUnit}
-              </p>
-              <h3 className="mt-2 font-display text-2xl text-cream">{item.variantData.name}</h3>
-              <p className="mt-2 text-sm text-cream/60">{item.variantData.tagline}</p>
-              <div className="mt-5 flex items-center justify-end border-t border-cream/10 pt-4">
-                <span className="text-xs text-cream/70 group-hover:text-cream">View SKU →</span>
+      <div className="flex w-full gap-6 overflow-x-auto snap-x snap-mandatory py-12 px-6 lg:px-10 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+        {items.map((item, index) => {
+          const isHovered = activeHover === index;
+          const isFocusedMobile = activeFocusedIndex === index;
+
+          return (
+            <Link
+              href={`/products/${item.slug}`}
+              key={`${item.slug}-${index}`}
+              ref={(el) => (cardRefs.current[index] = el)}
+              data-index={index}
+              data-cursor-hover
+              onMouseMove={(e) => handleMouseMove(e, index)}
+              onMouseLeave={handleMouseLeave}
+              style={{
+                perspective: "1000px",
+                transform: isHovered
+                  ? `perspective(1000px) rotateX(${tilt.rx}deg) rotateY(${tilt.ry}deg) translateY(-6px)`
+                  : "perspective(1000px) rotateX(0deg) rotateY(0deg)",
+              }}
+              className="gallery-card group relative flex h-[440px] w-[85vw] max-w-[300px] shrink-0 snap-center flex-col justify-end overflow-hidden rounded-3xl border border-cream/10 bg-gradient-to-b from-pine-800 to-pine-900 p-7 text-left whitespace-normal transition-all duration-300 ease-out lg:h-[480px] lg:w-[340px] lg:max-w-[340px]"
+            >
+              {/* Glow ambient background */}
+              <div
+                className="pointer-events-none absolute right-6 top-6 h-28 w-28 rounded-full opacity-80 blur-2xl transition-opacity duration-300 group-hover:opacity-100"
+                style={{ background: item.variantData.accent }}
+              />
+
+              {/* Product Image Wrapper with Mobile 3D Pop-Out & Desktop Lift */}
+              <div className="relative z-10 mb-6 flex h-72 justify-center">
+                <div
+                  className={`relative w-full transition-transform duration-500 ease-out ${
+                    isFocusedMobile
+                      ? "scale-110 -translate-y-4 drop-shadow-[0_25px_25px_rgba(0,0,0,0.75)] sm:scale-100 sm:translate-y-0"
+                      : "scale-95 opacity-85 sm:scale-100 sm:opacity-100"
+                  } ${isHovered ? "sm:scale-105 sm:-translate-y-2" : ""}`}
+                >
+                  <Image
+                    src={item.image}
+                    alt={`${item.variantData.name} - ${item.size}`}
+                    fill
+                    className="object-contain object-center drop-shadow-xl"
+                    sizes="(max-width: 768px) 300px, 340px"
+                    priority
+                  />
+                </div>
               </div>
-            </div>
-          </Link>
-        ))}
+
+              {/* Product Details */}
+              <div className="relative z-10">
+                <p className="text-xs uppercase tracking-[0.25em] text-gold-light">
+                  {item.size} · {item.stockUnit}
+                </p>
+                <h3 className="mt-2 font-display text-2xl text-cream">{item.variantData.name}</h3>
+                <p className="mt-2 text-sm text-cream/60">{item.variantData.tagline}</p>
+                <div className="mt-5 flex items-center justify-end border-t border-cream/10 pt-4">
+                  <span className="text-xs text-cream/70 transition-colors group-hover:text-cream">
+                    View SKU →
+                  </span>
+                </div>
+              </div>
+
+              {/* Desktop Magnifying Lens Overlay */}
+              {isHovered && (
+                <div
+                  className="pointer-events-none absolute z-30 hidden rounded-full border border-gold-light/60 shadow-2xl sm:block"
+                  style={{
+                    width: `${LENS_SIZE}px`,
+                    height: `${LENS_SIZE}px`,
+                    left: `${zoomPos.pxX - LENS_SIZE / 2}px`,
+                    top: `${zoomPos.pxY - LENS_SIZE / 2}px`,
+                    backgroundImage: `url(${item.image})`,
+                    backgroundRepeat: "no-repeat",
+                    backgroundSize: `${ZOOM_LEVEL * 100}%`,
+                    backgroundPosition: `${zoomPos.x}% ${zoomPos.y}%`,
+                  }}
+                />
+              )}
+            </Link>
+          );
+        })}
       </div>
     </section>
-  );
-}
-
-function DropletIcon({ color = "#D3A02E", size = 56 }) {
-  return (
-    <svg width={size} height={size * 1.3} viewBox="0 0 46 60" fill="none">
-      <path
-        d="M23 2C23 2 43 30 43 42C43 53.0457 34.0457 60 23 60C11.9543 60 3 53.0457 3 42C3 30 23 2 23 2Z"
-        fill={color}
-        opacity="0.92"
-      />
-    </svg>
   );
 }

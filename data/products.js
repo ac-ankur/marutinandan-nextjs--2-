@@ -2,6 +2,7 @@ export const variants = {
   black: {
     key: "black",
     name: "Black Mustard Oil",
+    image: "/images/blackmustard.png",
     tagline: "Strong. Aromatic. Traditional Kachi Ghani.",
     shortDescription:
       "Cold Pressed Black Mustard Oil is single-pressed from premium black mustard seeds for a sharp, pungent flavour that defines authentic Indian cooking.",
@@ -39,6 +40,7 @@ export const variants = {
   yellow: {
     key: "yellow",
     name: "Yellow Mustard Oil",
+    image: "/images/yellowmustard.png",
     tagline: "Smooth. Golden. A milder mustard.",
     shortDescription:
       "Cold Pressed Yellow Mustard Oil is single-pressed from premium yellow mustard seeds for a smoother, milder taste with all the goodness of cold pressed mustard oil.",
@@ -87,24 +89,64 @@ const PACK_META = {
     unit: "PET Bottle",
     skuSize: "1L",
     suitability: "Best for: nuclear families, first-time buyers, daily cooking.",
+    images: {
+      black: {
+        front: "/images/1l_black_mustard_front.png",
+        back: "/images/1l_black_mustard_back.png",
+      },
+      yellow: {
+        front: "/images/1l_yellow_mustard_front.png",
+        back: "/images/1l_yellow_mustard_back.png",
+      },
+    },
   },
   "2l": {
     label: "2 Litre",
     unit: "Can",
     skuSize: "2L",
     suitability: "Best for: regular households, monthly stock-up, better value per litre.",
+    images: {
+      black: {
+        front: "/images/2l_black_mustard.png",
+        back: "/images/2l_black_mustard.png",
+      },
+      yellow: {
+        front: "/images/2l_black_mustard.png",
+        back: "/images/2l_black_mustard.png",
+      },
+    },
   },
   "5l": {
     label: "5 Litre",
     unit: "Can",
     skuSize: "5L",
     suitability: "Best for: joint families, festive & bulk cooking, maximum savings.",
+    images: {
+      black: {
+        front: "/images/5l_black_mustard_front.png",
+        back: "/images/5l_black_mustard_back.png",
+      },
+      yellow: {
+        front: "/images/5l_yellow_mustard_front.png",
+        back: "/images/5l_yellow_mustard_back.png",
+      },
+    },
   },
   "15l": {
     label: "15 Litre",
     unit: "Tin",
     skuSize: "15L",
     suitability: "Best for: restaurants, caterers, food service, distributors & bulk supply.",
+    images: {
+      black: {
+        front: "/images/15l_black_mustard.png",
+        back: "/images/15l_black_mustard.png",
+      },
+      yellow: {
+        front: "/images/15l_yellow_mustard.png",
+        back: "/images/15l_yellow_mustard.png",
+      },
+    },
   },
 };
 
@@ -160,6 +202,8 @@ export const products = SIZES.flatMap((sizeKey) =>
       mrp: MRP[variant][sizeKey],
       description: SHORT_LISTING[variant][sizeKey],
       fullDescription: DESCRIPTIONS[variant][sizeKey],
+      image: meta.images[variant].front,
+      imageBack: meta.images[variant].back,
     };
   })
 );

@@ -32,6 +32,7 @@ async function sendEnquiryEmail(enquiry) {
     formatField("Email", enquiry.email),
     formatField("Product", enquiry.product),
     formatField("Quantity", enquiry.quantity),
+    formatField("Delivery address", enquiry.deliveryAddress),
     formatField("Message", enquiry.message),
   ].join("");
   const text = [
@@ -41,6 +42,7 @@ async function sendEnquiryEmail(enquiry) {
     enquiry.email && `Email: ${enquiry.email}`,
     enquiry.product && `Product: ${enquiry.product}`,
     enquiry.quantity && `Quantity: ${enquiry.quantity}`,
+    enquiry.deliveryAddress && `Delivery address: ${enquiry.deliveryAddress}`,
     enquiry.message && `Message: ${enquiry.message}`,
   ].filter(Boolean).join("\n");
 
@@ -75,7 +77,7 @@ export async function POST(request) {
   if (!body || typeof body !== "object") {
     return NextResponse.json({ ok: false, error: "Invalid form submission." }, { status: 400 });
   }
-  const { name, phone, email, product, quantity, message, honeypot } = body;
+  const { name, phone, email, product, quantity, deliveryAddress, message, honeypot } = body;
 
   // basic bot honeypot
   if (honeypot) {
@@ -95,6 +97,7 @@ export async function POST(request) {
     email: email ? String(email).slice(0, 200) : "",
     product: product ? String(product).slice(0, 200) : "",
     quantity: quantity ? String(quantity).slice(0, 100) : "",
+    deliveryAddress: deliveryAddress ? String(deliveryAddress).slice(0, 500) : "",
     message: message ? String(message).slice(0, 2000) : "",
   };
 

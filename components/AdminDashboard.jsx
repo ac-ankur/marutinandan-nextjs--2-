@@ -123,7 +123,10 @@ export default function AdminDashboard({ initialEnquiries }) {
                   </td>
                   <td className="px-5 py-4 text-ink/70">{e.product || "—"}</td>
                   <td className="px-5 py-4 text-ink/70">{e.quantity || "—"}</td>
-                  <td className="max-w-xs px-5 py-4 text-ink/60">{e.message || "—"}</td>
+                  <td className="max-w-xs px-5 py-4 text-ink/60">
+                    {e.deliveryAddress && <p className="mb-1 text-xs text-ink/45">{e.deliveryAddress}</p>}
+                    {e.message || "—"}
+                  </td>
                   <td className="px-5 py-4">
                     <select
                       value={e.status}

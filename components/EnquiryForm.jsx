@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import gsap from "gsap";
-import { CheckCircle2, X } from "lucide-react";
+import { CheckCircle2, Mail, MapPin, Package, Phone, Send, UserRound, X } from "lucide-react";
 import { getAllProducts } from "@/data/products";
 
 export default function EnquiryForm({ defaultProduct = "" }) {
@@ -21,6 +21,7 @@ export default function EnquiryForm({ defaultProduct = "" }) {
       email: form.email.value,
       product: form.product.value,
       quantity: form.quantity.value,
+      deliveryAddress: form.delivery_address.value,
       message: form.message.value,
       honeypot: form.company_website.value,
     };
@@ -31,8 +32,8 @@ export default function EnquiryForm({ defaultProduct = "" }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      const data = await res.json();
-      if (!res.ok || !data.ok) throw new Error(data.error || "Something went wrong");
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.ok) throw new Error(data?.error || "Unable to submit the enquiry.");
       setStatus("success");
       form.reset();
       requestAnimationFrame(() => {
@@ -42,32 +43,33 @@ export default function EnquiryForm({ defaultProduct = "" }) {
       });
     } catch (err) {
       setStatus("error");
-      setError(err.message);
+      console.error("Unable to submit enquiry:", err);
+      setError("We couldn't send your enquiry right now. Please try again in a moment or contact us on WhatsApp.");
     }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-3xl bg-cream-paper p-5 shadow-[0_30px_80px_-40px_rgba(21,56,38,0.35)] sm:p-8 lg:p-10">
+    <form onSubmit={handleSubmit} className="rounded-3xl bg-cream-paper p-5 shadow-[0_30px_80px_-40px_rgba(21,56,38,0.35)] sm:p-7 lg:p-8">
       {/* honeypot field, hidden from real users */}
       <input type="text" name="company_website" tabIndex={-1} autoComplete="off" className="hidden" />
 
-      <div className="grid gap-6 sm:grid-cols-2">
-        <Field label="Name" required>
+      <div className="grid gap-5 sm:grid-cols-2">
+        <Field label="Name" required icon={<UserRound className="h-4 w-4" />}>
           <input name="name" required placeholder="Your full name" className="form-input" />
         </Field>
-        <Field label="Phone" required>
+        <Field label="Phone" required icon={<Phone className="h-4 w-4" />}>
           <input name="phone" required placeholder="+91 XXXXX XXXXX" className="form-input" />
         </Field>
       </div>
 
-      <div className="mt-6">
-        <Field label="Email">
+      <div className="mt-5">
+        <Field label="Email" icon={<Mail className="h-4 w-4" />}>
           <input type="email" name="email" placeholder="you@email.com" className="form-input" />
         </Field>
       </div>
 
-      <div className="mt-6 grid gap-6 sm:grid-cols-2">
-        <Field label="Product">
+      <div className="mt-5 grid gap-5 sm:grid-cols-2">
+        <Field label="Product" icon={<Package className="h-4 w-4" />}>
           <select name="product" defaultValue={defaultProduct} className="form-input">
             <option value="">Select a product</option>
             {getAllProducts().map((p) => (
@@ -77,23 +79,34 @@ export default function EnquiryForm({ defaultProduct = "" }) {
             ))}
           </select>
         </Field>
-        <Field label="Quantity">
+        <Field label="Quantity" icon={<Package className="h-4 w-4" />}>
           <input name="quantity" placeholder="e.g. 5 packs / month" className="form-input" />
         </Field>
       </div>
 
-      <div className="mt-6">
-        <Field label="Message">
+      <div className="mt-5">
+        <Field label="Delivery address" icon={<MapPin className="h-4 w-4" />}>
           <textarea
-            name="message"
-            rows={4}
-            placeholder="Delivery address / bulk requirement / any notes"
+            name="delivery_address"
+            rows={2}
+            placeholder="House / street / city / PIN code"
             className="form-input resize-none"
           />
         </Field>
       </div>
 
-      <div className="mt-6 flex flex-col-reverse items-center gap-4 sm:flex-row sm:justify-between">
+      <div className="mt-5">
+        <Field label="Message" icon={<Send className="h-4 w-4" />}>
+          <textarea
+            name="message"
+            rows={2}
+            placeholder="Bulk requirement or any notes"
+            className="form-input resize-none"
+          />
+        </Field>
+      </div>
+
+      <div className="mt-5 flex flex-col-reverse items-center gap-3 sm:flex-row sm:justify-between">
         <p className="text-xs text-ink/50">We respect your privacy. No spam, ever.</p>
         <button
           type="submit"
@@ -134,10 +147,11 @@ export default function EnquiryForm({ defaultProduct = "" }) {
   );
 }
 
-function Field({ label, required, children }) {
+function Field({ label, required, icon, children }) {
   return (
     <label className="block text-sm">
-      <span className="font-medium text-ink/80">
+      <span className="flex items-center gap-2 font-medium text-ink/80">
+        {icon && <span className="text-pine-800">{icon}</span>}
         {label} {required && <span className="text-gold-deep">*</span>}
       </span>
       <span className="mt-2 block">{children}</span>

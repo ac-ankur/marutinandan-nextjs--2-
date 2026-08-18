@@ -1,9 +1,11 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { getProductBySlug, products } from "@/data/products";
 import LabReportTable from "@/components/LabReportTable";
 import EnquiryForm from "@/components/EnquiryForm";
 import ProductSkuBadge from "@/components/ProductSkuBadge";
+import ProductImageDisplay from "@/components/ProductImageDisplay";
 
 export function generateStaticParams() {
   return products.map((p) => ({ slug: p.slug }));
@@ -59,22 +61,7 @@ export default function ProductPage({ params }) {
         </nav>
 
         <div className="grid gap-14 lg:grid-cols-2">
-          <div className="relative flex h-[420px] items-center justify-center rounded-3xl bg-pine-950 lg:h-[520px]">
-            <div
-              className="absolute h-56 w-56 rounded-full opacity-30 blur-3xl"
-              style={{ background: product.variantData.accent }}
-            />
-            <svg width="160" height="208" viewBox="0 0 46 60" fill="none" className="relative z-10 drop-shadow-2xl">
-              <path
-                d="M23 2C23 2 43 30 43 42C43 53.0457 34.0457 60 23 60C11.9543 60 3 53.0457 3 42C3 30 23 2 23 2Z"
-                fill={product.variantData.accent}
-              />
-              <ellipse cx="16" cy="26" rx="4.5" ry="9" fill="#fff" opacity="0.3" />
-            </svg>
-            <span className="absolute bottom-6 rounded-full bg-cream/10 px-4 py-1.5 text-xs uppercase tracking-[0.2em] text-cream/70">
-              {product.size} · {product.stockUnit}
-            </span>
-          </div>
+          <ProductImageDisplay product={product} />
 
           <div>
             <p className="text-xs uppercase tracking-[0.25em] text-gold-deep">{product.variantData.tagline}</p>
@@ -177,3 +164,5 @@ function SpecRow({ label, value }) {
     </div>
   );
 }
+
+// Product image display moved to client component at components/ProductImageDisplay.jsx
