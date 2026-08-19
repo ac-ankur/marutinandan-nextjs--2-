@@ -17,7 +17,7 @@ function WhatsAppIcon({ className = "h-4 w-4" }) {
 
 export default function ContactInfo() {
   return (
-    <div className="space-y-3 sm:space-y-4">
+    <div className="space-y-3 sm:space-y-4 ">
       <Row
         icon={<MapPin size={20} strokeWidth={2} />}
         value={

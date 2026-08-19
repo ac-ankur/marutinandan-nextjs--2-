@@ -25,8 +25,8 @@ function CentralWreathFrame({ className }) {
         {/* Wheat Heads Left */}
         {[60, 90, 120, 150, 180, 210, 240, 270, 300, 330, 360].map((angle, i) => {
           const rad = (angle * Math.PI) / 180;
-          const x = 350 - Math.cos(rad) * 210;
           const y = 210 - Math.sin(rad) * 160;
+          const x = 350 - Math.cos(rad) * 210;
           return (
             <g key={`left-wheat-${i}`} transform={`translate(${x}, ${y}) rotate(${angle - 90})`}>
               <path d="M 0 0 C -4 -8, -8 -12, -12 -14" opacity="0.7" />
@@ -374,10 +374,10 @@ function ContactReveal() {
     <div
       onClick={(e) => e.stopPropagation()}
       onKeyDown={(e) => e.stopPropagation()}
-      className="flex h-full w-full flex-col bg-cream px-4 py-6 sm:px-8 sm:py-8 lg:px-10 lg:py-12"
+      className="flex min-h-full w-full flex-col bg-cream px-4 py-6 sm:px-8 sm:py-8  lg:px-10 lg:py-12"
     >
-      <div className="mx-auto grid w-full max-w-6xl gap-6 sm:gap-8 lg:grid-cols-2 lg:gap-12">
-        <div>
+      <div className="mx-auto grid w-full max-w-6xl gap-6 sm:gap-8 sm:mt-8 lg:grid-cols-2 lg:gap-12">
+        <div className="sm:mt-20">
           <p className="text-xs uppercase tracking-[0.3em] text-gold-deep">— Contact Us —</p>
           <h2 className="mt-2 sm:mt-3 font-display text-2xl leading-tight text-pine-900 sm:text-3xl lg:text-4xl">
             Get in <span className="italic text-gold-deep">Touch.</span>
@@ -387,7 +387,7 @@ function ContactReveal() {
             distributor, retailer, or business partner, our team is here to
             assist you.
           </p>
-          <div className="mt-4 sm:mt-6">
+          <div className="mt-4 sm:mt-8">
             <ContactInfo />
           </div>
         </div>
@@ -420,7 +420,7 @@ export default function EnquirySection() {
         aspectRatio="auto"
         className={`cursor-pointer focus-visible:ring-2 focus-visible:ring-gold-light focus-visible:ring-offset-2 transition-[min-height] duration-500 ${
           open
-            ? "min-h-[1320px] sm:min-h-[1200px] lg:min-h-[720px]"
+            ? "min-h-[1500px] sm:min-h-[1200px] lg:min-h-[720px]"
             : "min-h-[580px] sm:min-h-[640px] lg:min-h-[700px]"
         }`}
       />
