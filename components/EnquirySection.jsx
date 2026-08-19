@@ -374,7 +374,7 @@ function ContactReveal() {
     <div
       onClick={(e) => e.stopPropagation()}
       onKeyDown={(e) => e.stopPropagation()}
-      className="flex min-h-full w-full flex-col bg-cream px-4 py-6 sm:px-8 sm:py-8  lg:px-10 lg:py-12"
+      className="flex min-h-full w-full flex-col bg-cream px-4 pb-6 pt-12 sm:px-8 sm:py-8 lg:px-10 lg:py-12"
     >
       <div className="mx-auto grid w-full max-w-6xl gap-6 sm:gap-8 sm:mt-8 lg:grid-cols-2 lg:gap-12">
         <div className="sm:mt-20">
