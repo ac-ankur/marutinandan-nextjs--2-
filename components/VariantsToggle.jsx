@@ -40,7 +40,7 @@ export default function VariantsToggle() {
   return (
     <section className="bg-pine-900 px-4 py-10 sm:px-6 sm:py-24 lg:px-10 lg:py-22">
       <div className="mx-auto max-w-7xl">
-        <p className="text-center text-xs uppercase tracking-[0.3em] text-gold-light">— Our Products —</p>
+        <p className="text-center text-lg uppercase tracking-[0.3em] text-gold-light">— Our Products —</p>
         <h2 className="mt-4 text-center font-display text-4xl text-cream sm:text-5xl">
           Currently <span className="italic text-gold-light">Available.</span>
         </h2>

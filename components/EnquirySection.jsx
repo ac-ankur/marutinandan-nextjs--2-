@@ -96,7 +96,7 @@ function EnquiryPrompt() {
       <SunBurst className="absolute -right-4 -top-4 h-24 w-24 text-gold-light opacity-30 sm:h-32 sm:w-32" />
       <FieldLines className="absolute bottom-0 left-1/2 h-10 w-[85%] -translate-x-1/2 text-gold-light opacity-80" />
 
-      <p className="relative text-xs uppercase tracking-[0.3em] text-gold-light/80">
+      <p className="relative text-lg uppercase tracking-[0.3em] text-gold-light/80">
         — Reach Us —
       </p>
       <h2 className="relative mt-4 max-w-md font-display text-4xl leading-tight text-cream sm:text-5xl">

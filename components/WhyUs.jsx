@@ -155,7 +155,7 @@ export default function WhyUs() {
       <div className="relative mx-auto max-w-7xl">
         <div className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
           <div>
-            <p className="relative inline-block text-xs uppercase tracking-[0.3em] text-gold-deep">
+            <p className="relative inline-block text-lg uppercase tracking-[0.3em] text-gold-deep">
               — Why Us —
               <span
                 ref={underlineRef}

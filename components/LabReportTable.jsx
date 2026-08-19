@@ -44,7 +44,7 @@ export default function LabReportTable({ compact = false, variant = "dark" }) {
       <div className="flex flex-wrap items-center justify-between gap-4">
         {!compact && (
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-gold-light">🧪 Lab Verified</p>
+            <p className="text-lg uppercase tracking-[0.3em] text-gold-light">🧪 Lab Verified</p>
             <h2 className="mt-3 font-display text-4xl text-cream sm:text-5xl">
               Purity, <span className="italic text-gold-light">quantified.</span>
             </h2>

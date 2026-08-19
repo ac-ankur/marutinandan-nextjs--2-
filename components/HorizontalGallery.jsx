@@ -13,6 +13,7 @@ export default function HorizontalGallery({ items }) {
   const [tilt, setTilt] = useState({ rx: 0, ry: 0 });
 
   const cardRefs = useRef([]);
+  const imageRefs = useRef([]); // NEW: refs scoped to just the image wrapper
 
   // IntersectionObserver to handle the 3D focus animation on mobile scroll
   useEffect(() => {
@@ -37,7 +38,8 @@ export default function HorizontalGallery({ items }) {
     return () => observer.disconnect();
   }, [items]);
 
-  const handleMouseMove = (e, index) => {
+  // Tilt now tracks the whole card (kept as-is, feels nicer for the 3D lift)
+  const handleCardMouseMove = (e, index) => {
     const card = cardRefs.current[index];
     if (!card) return;
 
@@ -45,23 +47,35 @@ export default function HorizontalGallery({ items }) {
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
 
-    // Percent coordinates for zoom image positioning
-    const percentX = (mouseX / rect.width) * 100;
-    const percentY = (mouseY / rect.height) * 100;
-
-    // Subtle 3D tilt calculation based on cursor relative to card center
     const centerX = rect.width / 2;
     const centerY = rect.height / 2;
     const rotateX = -((mouseY - centerY) / centerY) * 8; // Max 8 deg rotation
     const rotateY = ((mouseX - centerX) / centerX) * 8;
 
-    setActiveHover(index);
     setTilt({ rx: rotateX, ry: rotateY });
+  };
+
+  // Zoom lens now tracks ONLY the image wrapper, not the full card
+  const handleImageMouseMove = (e, index) => {
+    const imageEl = imageRefs.current[index];
+    if (!imageEl) return;
+
+    const rect = imageEl.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+
+    const percentX = (mouseX / rect.width) * 100;
+    const percentY = (mouseY / rect.height) * 100;
+
+    setActiveHover(index);
     setZoomPos({ x: percentX, y: percentY, pxX: mouseX, pxY: mouseY });
   };
 
-  const handleMouseLeave = () => {
+  const handleImageMouseLeave = () => {
     setActiveHover(null);
+  };
+
+  const handleCardMouseLeave = () => {
     setTilt({ rx: 0, ry: 0 });
   };
 
@@ -69,10 +83,10 @@ export default function HorizontalGallery({ items }) {
   const ZOOM_LEVEL = 2.2;
 
   return (
-    <section className="relative overflow-hidden bg-pine-950 py-24">
+    <section className="relative overflow-hidden bg-pine-950 py-14">
       <div className="mx-auto max-w-7xl px-6 lg:px-10">
-        <div className="mb-12 max-w-2xl">
-          <p className="text-xs uppercase tracking-[0.3em] text-gold-light">Explore</p>
+        <div className="mb-4 max-w-2xl">
+          <p className="text-lg uppercase tracking-[0.3em] text-gold-light">Explore</p>
           <h2 className="mt-2 font-display text-3xl text-cream lg:text-4xl">
             Every bottle, <span className="italic text-gold-light">every size.</span>
           </h2>
@@ -91,11 +105,11 @@ export default function HorizontalGallery({ items }) {
               ref={(el) => (cardRefs.current[index] = el)}
               data-index={index}
               data-cursor-hover
-              onMouseMove={(e) => handleMouseMove(e, index)}
-              onMouseLeave={handleMouseLeave}
+              onMouseMove={(e) => handleCardMouseMove(e, index)}
+              onMouseLeave={handleCardMouseLeave}
               style={{
                 perspective: "1000px",
-                transform: isHovered
+                transform: tilt.rx || tilt.ry
                   ? `perspective(1000px) rotateX(${tilt.rx}deg) rotateY(${tilt.ry}deg) translateY(-6px)`
                   : "perspective(1000px) rotateX(0deg) rotateY(0deg)",
               }}
@@ -108,7 +122,13 @@ export default function HorizontalGallery({ items }) {
               />
 
               {/* Product Image Wrapper with Mobile 3D Pop-Out & Desktop Lift */}
-              <div className="relative z-10 mb-6 flex h-72 justify-center">
+              {/* This div is now the ONLY area that triggers/clips the zoom lens */}
+              <div
+                ref={(el) => (imageRefs.current[index] = el)}
+                onMouseMove={(e) => handleImageMouseMove(e, index)}
+                onMouseLeave={handleImageMouseLeave}
+                className="relative z-10 mb-6 flex h-72 justify-center overflow-hidden rounded-xl"
+              >
                 <div
                   className={`relative w-full transition-transform duration-500 ease-out ${
                     isFocusedMobile
@@ -125,6 +145,23 @@ export default function HorizontalGallery({ items }) {
                     priority
                   />
                 </div>
+
+                {/* Desktop Magnifying Lens Overlay — now positioned/clipped to the image box only */}
+                {isHovered && (
+                  <div
+                    className="pointer-events-none absolute z-30 hidden rounded-full border border-gold-light/60 shadow-2xl sm:block"
+                    style={{
+                      width: `${LENS_SIZE}px`,
+                      height: `${LENS_SIZE}px`,
+                      left: `${zoomPos.pxX - LENS_SIZE / 2}px`,
+                      top: `${zoomPos.pxY - LENS_SIZE / 2}px`,
+                      backgroundImage: `url(${item.image})`,
+                      backgroundRepeat: "no-repeat",
+                      backgroundSize: `${ZOOM_LEVEL * 100}%`,
+                      backgroundPosition: `${zoomPos.x}% ${zoomPos.y}%`,
+                    }}
+                  />
+                )}
               </div>
 
               {/* Product Details */}
@@ -140,23 +177,6 @@ export default function HorizontalGallery({ items }) {
                   </span>
                 </div>
               </div>
-
-              {/* Desktop Magnifying Lens Overlay */}
-              {isHovered && (
-                <div
-                  className="pointer-events-none absolute z-30 hidden rounded-full border border-gold-light/60 shadow-2xl sm:block"
-                  style={{
-                    width: `${LENS_SIZE}px`,
-                    height: `${LENS_SIZE}px`,
-                    left: `${zoomPos.pxX - LENS_SIZE / 2}px`,
-                    top: `${zoomPos.pxY - LENS_SIZE / 2}px`,
-                    backgroundImage: `url(${item.image})`,
-                    backgroundRepeat: "no-repeat",
-                    backgroundSize: `${ZOOM_LEVEL * 100}%`,
-                    backgroundPosition: `${zoomPos.x}% ${zoomPos.y}%`,
-                  }}
-                />
-              )}
             </Link>
           );
         })}

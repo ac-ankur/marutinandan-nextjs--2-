@@ -37,7 +37,7 @@ export default function HomePage() {
       
       <section className="bg-cream px-6 py-12 lg:px-10">
         <div className="mx-auto max-w-5xl text-center">
-          <p className="text-xs uppercase tracking-[0.3em] text-gold-deep">— Coming Soon —</p>
+          <p className="text-lg uppercase tracking-[0.3em] text-gold-deep">— Coming Soon —</p>
           <h2 className="mt-4 font-display text-4xl text-pine-900 sm:text-5xl">
             More Premium <span className="italic text-gold-deep">Cold-Pressed Oils.</span>
           </h2>
