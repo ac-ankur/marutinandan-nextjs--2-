@@ -25,9 +25,6 @@ export default function VariantsToggle() {
     });
   };
 
-  // Animate the panel back in every time the active variant changes
-  // (including the very first mount), instead of relying on a DOM
-  // load event that never fires on a <div>.
   useEffect(() => {
     gsap.fromTo(
       [panelRef.current, dropRef.current],
@@ -45,13 +42,13 @@ export default function VariantsToggle() {
           Currently <span className="italic text-gold-light">Available.</span>
         </h2>
 
-        <div className="mx-auto mt-10 flex w-full max-w-[320px] flex-wrap justify-center rounded-full bg-pine-950/50 p-1.5 sm:w-fit sm:max-w-none">
+        <div className="mx-auto mt-10 flex w-fit max-w-full items-center gap-1 overflow-x-auto rounded-full bg-pine-950/50 p-1.5 no-scrollbar">
           {Object.values(variants).map((v) => (
             <button
               key={v.key}
               onClick={() => switchTo(v.key)}
               data-cursor-hover
-              className={`rounded-full px-6 py-2.5 text-sm font-medium transition-colors ${
+              className={`shrink-0 whitespace-nowrap rounded-full px-4 py-2 text-xs font-medium transition-colors sm:px-6 sm:py-2.5 sm:text-sm ${
                 active === v.key ? "bg-gold text-pine-950" : "text-cream/70 hover:text-cream"
               }`}
             >
@@ -64,26 +61,54 @@ export default function VariantsToggle() {
           <div ref={dropRef} className="relative mx-auto flex w-full max-w-xl items-center justify-center lg:max-w-2xl">
             <span className="absolute -top-6 left-2 text-2xl text-gold-light/40">✽</span>
             <span className="absolute right-4 top-2 text-xl text-gold-light/40">✽</span>
+
             <div
-              className="absolute h-96 w-96 rounded-full opacity-35 blur-3xl pointer-events-none"
+              className="absolute -left-10 top-6 h-72 w-72 rounded-full opacity-40 blur-[80px] pointer-events-none"
               style={{ background: data.accent }}
             />
             <div
+              className="absolute -right-6 bottom-2 h-80 w-80 rounded-full opacity-25 blur-[100px] pointer-events-none"
+              style={{ background: data.accent }}
+            />
+
+            {/* SVG blob mask: feathers the rectangular image into a soft organic edge */}
+            <svg width="0" height="0" className="absolute">
+              <defs>
+                <filter id="softBlobEdge" x="-30%" y="-30%" width="160%" height="160%">
+                  <feGaussianBlur in="SourceGraphic" stdDeviation="24" result="blur" />
+                  <feColorMatrix
+                    in="blur"
+                    mode="matrix"
+                    values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -9"
+                    result="soft"
+                  />
+                  <feComposite in="SourceGraphic" in2="soft" operator="atop" />
+                </filter>
+                <clipPath id="blobShape" clipPathUnits="objectBoundingBox">
+                  <path d="M0.5,0.03 C0.75,0.02 0.97,0.18 0.98,0.45 C0.99,0.68 0.93,0.85 0.72,0.94 C0.55,1.01 0.32,0.99 0.15,0.87 C0.02,0.77 0.01,0.55 0.03,0.38 C0.06,0.16 0.28,0.04 0.5,0.03 Z" />
+                </clipPath>
+              </defs>
+            </svg>
+
+            <div
               className="relative h-[460px] w-full max-w-[480px] sm:h-[540px] sm:max-w-[560px] lg:h-[600px] lg:max-w-[600px]"
-              style={{
-                WebkitMaskImage: "radial-gradient(ellipse 68% 68% at 50% 50%, black 30%, rgba(0, 0, 0, 0.75) 52%, transparent 72%)",
-                maskImage: "radial-gradient(ellipse 68% 68% at 50% 50%, black 30%, rgba(0, 0, 0, 0.75) 52%, transparent 72%)",
-              }}
+              style={{ filter: "url(#softBlobEdge)" }}
             >
-              <Image
-                src={data.image || (active === "black" ? "/images/blackmustard.png" : "/images/yellowmustard.png")}
-                alt={data.name}
-                fill
-                className="object-contain drop-shadow-2xl transition-transform duration-300 scale-115"
-                sizes="(max-width: 768px) 480px, 600px"
-                priority
-              />
+              <div
+                className="relative h-full w-full"
+                style={{ clipPath: "url(#blobShape)" }}
+              >
+                <Image
+                  src={data.image || (active === "black" ? "/images/blackmustard.png" : "/images/yellowmustard.png")}
+                  alt={data.name}
+                  fill
+                  className="object-contain scale-125 transition-transform duration-300"
+                  sizes="(max-width: 768px) 480px, 600px"
+                  priority
+                />
+              </div>
             </div>
+
             <div className="absolute right-0 top-6 z-10 rounded-2xl border border-gold-light/30 bg-pine-950/85 px-5 py-4 text-center backdrop-blur-md shadow-2xl sm:right-2 sm:top-10 lg:-right-4 lg:top-12">
               <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-gold-light">Pungency</p>
               <p className="font-display text-3xl text-gold-light">{data.pungency}</p>
