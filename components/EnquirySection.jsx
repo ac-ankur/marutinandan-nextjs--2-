@@ -420,7 +420,7 @@ export default function EnquirySection() {
         aspectRatio="auto"
         className={`cursor-pointer focus-visible:ring-2 focus-visible:ring-gold-light focus-visible:ring-offset-2 transition-[min-height] duration-500 ${
           open
-            ? "min-h-[1500px] sm:min-h-[1200px] lg:min-h-[720px]"
+            ? "min-h-[1500px] sm:min-h-[1200px] lg:min-h-[900px]"
             : "min-h-[580px] sm:min-h-[640px] lg:min-h-[700px]"
         }`}
       />
