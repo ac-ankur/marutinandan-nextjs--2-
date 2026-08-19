@@ -17,10 +17,9 @@ function WhatsAppIcon({ className = "h-4 w-4" }) {
 
 export default function ContactInfo() {
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4">
       <Row
         icon={<MapPin size={20} strokeWidth={2} />}
-        // label="Address"
         value={
           <>
             Yugika Foods Private Limited<br/>
@@ -32,21 +31,20 @@ export default function ContactInfo() {
       />
       <Row
         icon={<Phone size={20} strokeWidth={2} />}
-        // label="Phone"
         value={
-          <span className="flex flex-wrap items-center gap-2">
-            <span>+91 90587 04492</span>
+          <div className="flex flex-col gap-2">
+            <span className="font-medium text-pine-900">+91 90587 04492</span>
             <a
               href="https://wa.me/919828407444"
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-full bg-[#25D366] px-3.5 py-1.5 text-xs font-bold text-pine-950 shadow-sm transition-all duration-200 hover:scale-105 hover:bg-[#20ba5a] hover:shadow-md"
+              className="inline-flex w-fit items-center gap-1.5 rounded-full bg-[#25D366] px-3.5 py-1.5 text-xs font-bold text-pine-950 shadow-sm transition-all duration-200 hover:scale-105 hover:bg-[#20ba5a] hover:shadow-md"
               aria-label="Message +91 98284 07444 on WhatsApp"
             >
               <WhatsAppIcon className="h-4 w-4 fill-current text-pine-950" />
               <span>WhatsApp: +91 98284 07444</span>
             </a>
-          </span>
+          </div>
         }
         compact
       />
@@ -62,13 +60,17 @@ export default function ContactInfo() {
 
 function Row({ icon, label, value, compact = false }) {
   return (
-    <div className={`flex items-center gap-4 rounded-2xl bg-cream-paper px-5 ${compact ? "py-3.5" : "py-4"}`}>
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-pine-800 text-cream">
+    <div className={`flex items-start gap-3 rounded-2xl bg-cream-paper px-4 sm:px-5 sm:gap-4 ${compact ? "py-3 sm:py-3.5" : "py-3.5 sm:py-4"}`}>
+      <span className="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-full bg-pine-800 text-cream mt-0.5">
         {icon}
       </span>
-      <div className={compact ? "flex flex-wrap items-baseline gap-x-3 gap-y-0.5" : ""}>
-        <p className="text-xs uppercase tracking-[0.15em] text-ink/50">{label}</p>
-        <p className="font-medium text-pine-900">{value}</p>
+      <div className="min-w-0 flex-1">
+        {label && <p className="text-xs uppercase tracking-[0.15em] text-ink/50">{label}</p>}
+        {typeof value === "string" ? (
+          <p className="font-medium text-pine-900 text-sm sm:text-base break-all">{value}</p>
+        ) : (
+          <div className="text-sm sm:text-base">{value}</div>
+        )}
       </div>
     </div>
   );

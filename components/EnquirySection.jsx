@@ -21,7 +21,7 @@ function CentralWreathFrame({ className }) {
         {/* Outer Laurel / Wheat Arcs */}
         <path d="M 120 210 C 120 80, 240 30, 350 30 C 460 30, 580 80, 580 210 C 580 340, 460 390, 350 390 C 240 390, 120 340, 120 210 Z" opacity="0.4" strokeDasharray="4 4" />
         <path d="M 140 210 C 140 95, 245 48, 350 48 C 455 48, 560 95, 560 210 C 560 325, 455 372, 350 372 C 245 372, 140 325, 140 210 Z" opacity="0.8" />
-        
+
         {/* Wheat Heads Left */}
         {[60, 90, 120, 150, 180, 210, 240, 270, 300, 330, 360].map((angle, i) => {
           const rad = (angle * Math.PI) / 180;
@@ -374,20 +374,20 @@ function ContactReveal() {
     <div
       onClick={(e) => e.stopPropagation()}
       onKeyDown={(e) => e.stopPropagation()}
-      className="flex h-full w-full flex-col justify-center bg-cream px-6 py-16 sm:px-10"
+      className="flex h-full w-full flex-col bg-cream px-4 py-6 sm:px-8 sm:py-8 lg:px-10 lg:py-12"
     >
-      <div className="mx-auto grid w-full mt-15 max-w-6xl gap-10 lg:grid-cols-2 lg:gap-14">
+      <div className="mx-auto grid w-full max-w-6xl gap-6 sm:gap-8 lg:grid-cols-2 lg:gap-12">
         <div>
           <p className="text-xs uppercase tracking-[0.3em] text-gold-deep">— Contact Us —</p>
-          <h2 className="mt-4 font-display text-3xl leading-tight text-pine-900 sm:text-4xl">
+          <h2 className="mt-2 sm:mt-3 font-display text-2xl leading-tight text-pine-900 sm:text-3xl lg:text-4xl">
             Get in <span className="italic text-gold-deep">Touch.</span>
           </h2>
-          <p className="mt-5 max-w-md text-base leading-relaxed text-ink/70">
+          <p className="mt-2.5 sm:mt-4 max-w-md text-sm sm:text-base leading-relaxed text-ink/70">
             We&apos;d love to hear from you. Whether you&apos;re a customer,
             distributor, retailer, or business partner, our team is here to
             assist you.
           </p>
-          <div className="mt-8">
+          <div className="mt-4 sm:mt-6">
             <ContactInfo />
           </div>
         </div>
@@ -401,7 +401,7 @@ export default function EnquirySection() {
   const [open, setOpen] = useState(false);
 
   return (
-    <section id="order" className="bg-cream py-18 lg:py-30">
+    <section id="order" className="bg-cream">
       <PixelSwap
         trigger="click"
         active={open}
@@ -418,7 +418,11 @@ export default function EnquirySection() {
         randomness={0.12}
         fade
         aspectRatio="auto"
-        className="min-h-[960px] cursor-pointer focus-visible:ring-2 focus-visible:ring-gold-light focus-visible:ring-offset-2 sm:min-h-[880px] lg:min-h-[750px]"
+        className={`cursor-pointer focus-visible:ring-2 focus-visible:ring-gold-light focus-visible:ring-offset-2 transition-[min-height] duration-500 ${
+          open
+            ? "min-h-[1320px] sm:min-h-[1200px] lg:min-h-[720px]"
+            : "min-h-[580px] sm:min-h-[640px] lg:min-h-[700px]"
+        }`}
       />
     </section>
   );

@@ -49,11 +49,11 @@ export default function EnquiryForm({ defaultProduct = "" }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-3xl bg-cream-paper p-5 shadow-[0_30px_80px_-40px_rgba(21,56,38,0.35)] sm:p-7 lg:p-8">
+    <form onSubmit={handleSubmit} className="rounded-3xl bg-cream-paper p-6 sm:p-7 lg:p-8 shadow-[0_30px_80px_-40px_rgba(21,56,38,0.35)]">
       {/* honeypot field, hidden from real users */}
       <input type="text" name="company_website" tabIndex={-1} autoComplete="off" className="hidden" />
 
-      <div className="grid gap-5 sm:grid-cols-2">
+      <div className="grid gap-3.5 sm:gap-5 sm:grid-cols-2">
         <Field label="Name" required icon={<UserRound className="h-4 w-4" />}>
           <input name="name" required placeholder="Your full name" className="form-input" />
         </Field>
@@ -62,13 +62,13 @@ export default function EnquiryForm({ defaultProduct = "" }) {
         </Field>
       </div>
 
-      <div className="mt-5">
+      <div className="mt-3.5 sm:mt-5">
         <Field label="Email" icon={<Mail className="h-4 w-4" />}>
           <input type="email" name="email" placeholder="you@email.com" className="form-input" />
         </Field>
       </div>
 
-      <div className="mt-5 grid gap-5 sm:grid-cols-2">
+      <div className="mt-3.5 sm:mt-5 grid gap-3.5 sm:gap-5 sm:grid-cols-2">
         <Field label="Product" icon={<Package className="h-4 w-4" />}>
           <select name="product" defaultValue={defaultProduct} className="form-input">
             <option value="">Select a product</option>
@@ -84,7 +84,7 @@ export default function EnquiryForm({ defaultProduct = "" }) {
         </Field>
       </div>
 
-      <div className="mt-5">
+      <div className="mt-3.5 sm:mt-5">
         <Field label="Delivery address" icon={<MapPin className="h-4 w-4" />}>
           <textarea
             name="delivery_address"
@@ -95,7 +95,7 @@ export default function EnquiryForm({ defaultProduct = "" }) {
         </Field>
       </div>
 
-      <div className="mt-5">
+      <div className="mt-3.5 sm:mt-5">
         <Field label="Message" icon={<Send className="h-4 w-4" />}>
           <textarea
             name="message"
@@ -106,7 +106,7 @@ export default function EnquiryForm({ defaultProduct = "" }) {
         </Field>
       </div>
 
-      <div className="mt-5 flex flex-col-reverse items-center gap-3 sm:flex-row sm:justify-between">
+      <div className="mt-4 sm:mt-5 flex flex-col-reverse items-center gap-3 sm:flex-row sm:justify-between">
         <p className="text-xs text-ink/50">We respect your privacy. No spam, ever.</p>
         <button
           type="submit"
