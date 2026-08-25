@@ -60,6 +60,7 @@ cp .env.example .env.local
 - Auto-generated `sitemap.xml` (`app/sitemap.js`) that includes every product SKU page.
 - Auto-generated `robots.txt` (`app/robots.js`) that disallows `/admin` and `/api`.
 - Google Analytics 4 support via `NEXT_PUBLIC_GA_ID` (component no-ops if unset).
+- Vercel Web Analytics via `@vercel/analytics`; enable Web Analytics in the Vercel project dashboard after deployment.
 
 ### Admin dashboard
 - Simple password gate (`ADMIN_PASSWORD` env var, defaults to `marutinandan2026`) at `/admin`.

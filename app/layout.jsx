@@ -6,6 +6,7 @@ import SmoothScroll from "@/components/SmoothScroll";
 import Preloader from "@/components/Preloader";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
 import { BrandProvider } from "@/components/BrandProvider";
+import { Analytics } from "@vercel/analytics/react";
 
 const display = Playfair_Display({
   subsets: ["latin"],
@@ -107,6 +108,7 @@ export default function RootLayout({ children }) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(orgSchema) }}
         />
         <GoogleAnalytics />
+        <Analytics />
         <Preloader />
         <BrandProvider>
           <SmoothScroll>
