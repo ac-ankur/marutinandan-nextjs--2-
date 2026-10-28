@@ -53,7 +53,21 @@ export default function Footer() {
 
       <div className="mx-auto mt-14 flex max-w-7xl flex-col gap-3 border-t border-cream/10 pt-6 text-xs text-cream/50 md:flex-row md:items-center md:justify-between">
         <p>&copy; {new Date().getFullYear()} {company.legalName}. All rights reserved.</p>
-        <p>Made with care in India</p>
+        <div className="flex flex-wrap items-center gap-4 sm:gap-6">
+          <Link href="/terms-and-conditions" className="hover:text-cream transition-colors">
+            Terms &amp; Conditions
+          </Link>
+          <Link href="/privacy-policy" className="hover:text-cream transition-colors">
+            Privacy Policy
+          </Link>
+          <Link href="/shipping-policy" className="hover:text-cream transition-colors">
+            Shipping Policy
+          </Link>
+          <Link href="/refund-policy" className="hover:text-cream transition-colors">
+            Refund &amp; Cancellation
+          </Link>
+          <span>Made with care in India</span>
+        </div>
       </div>
     </footer>
   );
