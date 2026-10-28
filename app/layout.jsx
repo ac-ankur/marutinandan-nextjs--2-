@@ -6,6 +6,7 @@ import SmoothScroll from "@/components/SmoothScroll";
 import Preloader from "@/components/Preloader";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
 import { BrandProvider } from "@/components/BrandProvider";
+import { AuthProvider } from "@/context/AuthContext";
 import { Analytics } from "@vercel/analytics/react";
 
 const display = Playfair_Display({
@@ -99,6 +100,12 @@ const orgSchema = {
   sameAs: [],
 };
 
+import { PricingModeProvider } from "@/context/PricingModeContext";
+import { CartProvider } from "@/context/CartContext";
+import { ToastProvider } from "@/context/ToastContext";
+import { WishlistProvider } from "@/context/WishlistContext";
+import CartDrawer from "@/components/CartDrawer";
+
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className={`${display.variable} ${body.variable}`}>
@@ -110,13 +117,24 @@ export default function RootLayout({ children }) {
         <GoogleAnalytics />
         <Analytics />
         <Preloader />
-        <BrandProvider>
-          <SmoothScroll>
-            <Navbar />
-            <main className="overflow-x-hidden">{children}</main>
-            <Footer />
-          </SmoothScroll>
-        </BrandProvider>
+        <ToastProvider>
+          <AuthProvider>
+            <CartProvider>
+              <WishlistProvider>
+                <PricingModeProvider>
+                  <BrandProvider>
+                    <SmoothScroll>
+                      <Navbar />
+                      <CartDrawer />
+                      <main className="overflow-x-clip">{children}</main>
+                      <Footer />
+                    </SmoothScroll>
+                  </BrandProvider>
+                </PricingModeProvider>
+              </WishlistProvider>
+            </CartProvider>
+          </AuthProvider>
+        </ToastProvider>
       </body>
     </html>
   );

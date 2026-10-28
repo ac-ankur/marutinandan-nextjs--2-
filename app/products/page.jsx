@@ -1,4 +1,5 @@
 import ProductsGrid from "@/components/ProductsGrid";
+import PricingModeSwitch from "@/components/PricingModeSwitch";
 
 export const metadata = {
   title: "Products — Premium Cold-Pressed Edible Oils",
@@ -20,9 +21,14 @@ export default function ProductsPage({ searchParams }) {
         <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-ink/70">
           Yugika Foods proudly offers naturally processed edible oils that combine traditional extraction with modern quality standards.
         </p>
+
+        {/* Pricing Mode Toggle (Static vs Live API) */}
+        <div className="mt-8 flex justify-center">
+          <PricingModeSwitch />
+        </div>
       </div>
 
-      <div className="mx-auto mt-16 max-w-4xl">
+      <div className="mx-auto mt-12 max-w-4xl">
         <ProductsGrid initialVariant={initialVariant} />
       </div>
     </div>

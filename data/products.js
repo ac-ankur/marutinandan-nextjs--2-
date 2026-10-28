@@ -210,8 +210,27 @@ export const products = SIZES.flatMap((sizeKey) =>
 
 export function getProductBySlug(slug) {
   const product = products.find((p) => p.slug === slug);
-  if (!product) return null;
-  return { ...product, variantData: variants[product.variant] };
+  if (product) return { ...product, variantData: variants[product.variant] };
+
+  // Fallback for dynamically created products from the API/Admin
+  const isYellow = slug?.toLowerCase().includes("yellow");
+  const variantKey = isYellow ? "yellow" : "black";
+  return {
+    slug,
+    variant: variantKey,
+    sizeKey: "1l",
+    size: "1 Litre",
+    stockUnit: "Bottle",
+    skuBase: `${isYellow ? "YMO" : "BMO"}-1L-CP`,
+    suitability: "Suitable for all everyday cooking and authentic traditional dishes.",
+    mrp: 349,
+    description: "100% Pure Cold Pressed Mustard Oil pressed from selected seeds with traditional aroma and pungency.",
+    fullDescription: "Cold-pressed in small batches, unfiltered and nutrient-rich.",
+    image: isYellow ? "/images/yellowmustard.png" : "/images/blackmustard.png",
+    imageBack: isYellow ? "/images/yellowmustard.png" : "/images/blackmustard.png",
+    variantData: variants[variantKey],
+    isDynamicOnly: true,
+  };
 }
 
 export function getAllProducts() {

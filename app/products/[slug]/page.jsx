@@ -1,11 +1,17 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import { getProductBySlug, products } from "@/data/products";
 import LabReportTable from "@/components/LabReportTable";
 import EnquiryForm from "@/components/EnquiryForm";
 import ProductSkuBadge from "@/components/ProductSkuBadge";
 import ProductImageDisplay from "@/components/ProductImageDisplay";
+import ProductPricingSection from "@/components/ProductPricingSection";
+import ProductReviewsSection from "@/components/reviews/ProductReviewsSection";
+import ProductHeroRating from "@/components/reviews/ProductHeroRating";
+import PincodeChecker from "@/components/PincodeChecker";
+import ProductDetailsAccordion from "@/components/ProductDetailsAccordion";
+import ProductBenefitsPanel from "@/components/ProductBenefitsPanel";
+import { ProductVariantProvider } from "@/context/ProductVariantContext";
 
 export function generateStaticParams() {
   return products.map((p) => ({ slug: p.slug }));
@@ -14,10 +20,8 @@ export function generateStaticParams() {
 export function generateMetadata({ params }) {
   const product = getProductBySlug(params.slug);
   if (!product) return {};
-
-  const title = `${product.variantData.name} — ${product.size} ${product.stockUnit}`;
+  const title = `${product.variantData.name} - ${product.size} ${product.stockUnit}`;
   const description = product.description;
-
   return {
     title,
     description,
@@ -30,12 +34,25 @@ export default function ProductPage({ params }) {
   const product = getProductBySlug(params.slug);
   if (!product) notFound();
 
-  const otherSizes = products.filter((p) => p.variant === product.variant && p.slug !== product.slug);
+  // Same flavour, other sizes (for size pill selector)
+  const otherSizes = products
+    .filter((p) => p.variant === product.variant && p.slug !== product.slug)
+    .map((p) => ({ slug: p.slug, size: p.size, stockUnit: p.stockUnit, mrp: p.mrp }));
+
+  // Cross-flavour products (same size, different variety)
+  const crossFlavour = products.filter(
+    (p) => p.sizeKey === product.sizeKey && p.variant !== product.variant
+  );
+
+  // All other products for the "explore more" panel
+  const relatedProducts = products
+    .filter((p) => p.slug !== product.slug && p.variant !== product.variant)
+    .slice(0, 3);
 
   const productSchema = {
     "@context": "https://schema.org",
     "@type": "Product",
-    name: `${product.variantData.name} — ${product.size} ${product.stockUnit}`,
+    name: `${product.variantData.name} - ${product.size} ${product.stockUnit}`,
     description: product.description,
     brand: { "@type": "Brand", name: "Marutinandan" },
     offers: {
@@ -47,122 +64,109 @@ export default function ProductPage({ params }) {
   };
 
   return (
-    <div className="bg-cream px-6 pb-24 pt-36 lg:px-10 lg:pt-44">
+    <div className="bg-cream px-4 pb-24 pt-36 lg:px-10 lg:pt-44">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
       />
 
       <div className="mx-auto max-w-6xl">
-        <nav className="mb-10 flex items-center gap-2 text-sm text-ink/50">
-          <Link href="/products" className="hover:text-pine-800">Products</Link>
+        <nav className="mb-8 flex items-center gap-2 text-sm text-ink/50">
+          <Link href="/products" className="hover:text-pine-800 transition-colors">Products</Link>
           <span>/</span>
-          <span className="text-ink/80">{product.variantData.name} · {product.size}</span>
+          <span className="text-ink/80">{product.variantData.name} - {product.size}</span>
         </nav>
 
-        <div className="grid gap-14 lg:grid-cols-2">
-          <ProductImageDisplay product={product} />
+        <ProductVariantProvider>
+          <div className="grid gap-10 lg:grid-cols-[1fr_480px] lg:items-start">
 
-          <div>
-            <p className="text-xs uppercase tracking-[0.25em] text-gold-deep">{product.variantData.tagline}</p>
-            <h1 className="mt-4 font-display text-4xl text-pine-900 sm:text-5xl">
-              {product.variantData.name}
-            </h1>
-            <p className="mt-2 font-display text-xl italic text-ink/60">
-              {product.size} {product.stockUnit}
-            </p>
-            <p className="mt-6 max-w-lg text-base leading-relaxed text-ink/70">{product.description}</p>
-
-            <ul className="mt-6 space-y-2.5">
-              {product.variantData.features.map((f) => (
-                <li key={f} className="flex items-start gap-3 text-sm text-ink/70">
-                  <span className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border border-gold-deep/40 text-gold-deep">
-                    ✓
-                  </span>
-                  {f}
-                </li>
-              ))}
-            </ul>
-
-            <div className="mt-8 flex items-center gap-6">
-              <span className="font-display text-4xl text-gold-deep">₹{product.mrp}</span>
-              <span className="text-sm text-ink/50">MRP, inclusive of taxes</span>
+            {/* LEFT COLUMN — Product image and rich trust & benefits panel */}
+            <div className="space-y-6">
+              <ProductImageDisplay product={product} />
+              <ProductBenefitsPanel product={product} crossFlavour={crossFlavour} />
             </div>
 
-            <div className="mt-8 grid grid-cols-2 gap-4 text-sm">
-              <ProductSkuBadge product={product} />
-              <SpecRow label="Pack" value={`${product.size} ${product.stockUnit}`} />
-              <SpecRow label="Certification" value="FSSAI · NABL" />
-              <SpecRow label="Shelf Life" value="12 months" />
-            </div>
+            <div className="flex flex-col gap-0">
+              <p className="text-xs uppercase tracking-[0.25em] text-gold-deep">
+                {product.variantData.tagline}
+              </p>
+              <h1 className="mt-3 font-display text-3xl font-bold text-pine-900 sm:text-4xl">
+                {product.variantData.name}
+              </h1>
+              <p className="mt-1 text-base text-ink/55">
+                {product.size} {product.stockUnit}
+              </p>
 
-            <p className="mt-6 rounded-xl bg-gold/10 px-4 py-3 text-sm text-gold-deep">{product.suitability}</p>
+              <div className="mt-3">
+                <ProductHeroRating product={product} />
+              </div>
 
-            <a
-              href="#enquire"
-              data-scroll-to="#enquire"
-              data-cursor-hover
-              className="mt-8 inline-flex items-center gap-2 rounded-full bg-pine-800 px-7 py-3.5 text-sm font-medium text-cream transition-transform hover:scale-[1.02]"
-            >
-              Enquire About This Pack →
-            </a>
+              <p className="mt-4 text-sm leading-relaxed text-ink/65">
+                {product.description}
+              </p>
 
-            {otherSizes.length > 0 && (
-              <div className="mt-10 border-t border-ink/10 pt-6">
-                <p className="text-xs uppercase tracking-[0.2em] text-ink/50">Other sizes</p>
-                <div className="mt-3 flex flex-wrap gap-3">
-                  {otherSizes.map((s) => (
-                    <Link
-                      key={s.slug}
-                      href={`/products/${s.slug}`}
-                      className="rounded-full border border-ink/15 px-4 py-2 text-sm text-ink/70 transition-colors hover:border-gold-deep hover:text-pine-800"
-                    >
-                      {s.size} {s.stockUnit}
-                    </Link>
+              <div className="mt-6">
+                <ProductPricingSection product={product} otherSizes={otherSizes} />
+              </div>
+
+              <PincodeChecker />
+
+              <div className="mt-6 rounded-2xl border border-ink/10 bg-white/50 px-4 py-4">
+                <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-ink/50">
+                  Why Yugika?
+                </p>
+                <ul className="space-y-2">
+                  {product.variantData.features.slice(0, 4).map((f) => (
+                    <li key={f} className="flex items-start gap-2.5 text-sm text-ink/70">
+                      <span className="mt-0.5 flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-gold/20 text-[10px] font-bold text-gold-deep">
+                        ✓
+                      </span>
+                      {f}
+                    </li>
                   ))}
+                </ul>
+              </div>
+
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                <ProductSkuBadge product={product} />
+                <div className="rounded-xl bg-cream-paper px-4 py-3">
+                  <p className="text-[10px] uppercase tracking-[0.15em] text-ink/45">Pack</p>
+                  <p className="mt-1 text-sm font-medium text-pine-900">{product.size} {product.stockUnit}</p>
+                </div>
+                <div className="rounded-xl bg-cream-paper px-4 py-3">
+                  <p className="text-[10px] uppercase tracking-[0.15em] text-ink/45">Certification</p>
+                  <p className="mt-1 text-sm font-medium text-pine-900">FSSAI - NABL</p>
+                </div>
+                <div className="rounded-xl bg-cream-paper px-4 py-3">
+                  <p className="text-[10px] uppercase tracking-[0.15em] text-ink/45">Shelf Life</p>
+                  <p className="mt-1 text-sm font-medium text-pine-900">12 months</p>
                 </div>
               </div>
-            )}
+            </div>
           </div>
-        </div>
 
-        <div className="mt-24 grid gap-10 lg:grid-cols-[1.4fr_1fr]">
-          <div>
-            <p className="text-xs uppercase tracking-[0.25em] text-gold-deep">Product Description</p>
-            <p className="mt-4 whitespace-pre-line text-base leading-relaxed text-ink/70">
-              {product.fullDescription}
-            </p>
+          <div className="mt-16">
+            <ProductDetailsAccordion product={product} />
           </div>
-          <div className="rounded-3xl bg-cream-paper p-7">
-            <p className="text-xs uppercase tracking-[0.25em] text-gold-deep">Best Suited For</p>
-            <p className="mt-4 text-sm leading-relaxed text-ink/70">{product.suitability}</p>
-          </div>
-        </div>
+        </ProductVariantProvider>
 
-        <div className="mt-24 rounded-3xl bg-pine-950 p-8 lg:p-12">
+        <div className="mt-16 rounded-3xl bg-pine-950 p-8 lg:p-12">
           <LabReportTable compact />
         </div>
+
+        <ProductReviewsSection product={product} />
 
         <div id="enquire" className="mt-24 scroll-mt-28">
           <h2 className="text-center font-display text-3xl text-pine-900 sm:text-4xl">
             Enquire about <span className="italic text-gold-deep">{product.variantData.name}</span>
           </h2>
           <div className="mx-auto mt-10 max-w-2xl">
-            <EnquiryForm defaultProduct={`${product.variantData.name} · ${product.size} ${product.stockUnit}`} />
+            <EnquiryForm
+              defaultProduct={`${product.variantData.name} - ${product.size} ${product.stockUnit}`}
+            />
           </div>
         </div>
       </div>
     </div>
   );
 }
-
-function SpecRow({ label, value }) {
-  return (
-    <div className="rounded-xl bg-cream-paper px-4 py-3">
-      <p className="text-[10px] uppercase tracking-[0.15em] text-ink/45">{label}</p>
-      <p className="mt-1 font-medium text-pine-900">{value}</p>
-    </div>
-  );
-}
-
-// Product image display moved to client component at components/ProductImageDisplay.jsx

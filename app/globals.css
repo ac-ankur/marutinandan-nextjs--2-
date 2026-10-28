@@ -69,6 +69,143 @@ video {
   .gallery-card {
     min-width: 20rem;
   }
+
+  .cart-drawer-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(184, 134, 11, 0.45) transparent;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .cart-drawer-scroll::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .cart-drawer-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .cart-drawer-scroll::-webkit-scrollbar-thumb {
+    background-color: rgba(184, 134, 11, 0.4);
+    border-radius: 9999px;
+  }
+
+  .cart-drawer-scroll::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(184, 134, 11, 0.7);
+  }
+}
+
+/* -------- Animated Heart Wishlist Button -------- */
+.heart-btn {
+  --heart-color: rgb(244, 63, 94);
+  position: relative;
+  width: 54px;
+  height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: 2px solid rgba(0, 0, 0, 0.12);
+  border-radius: 1rem;
+  background: #fff;
+  transition: border-color 0.25s, background-color 0.25s, box-shadow 0.25s;
+  flex-shrink: 0;
+}
+
+.heart-btn:hover {
+  border-color: rgba(244, 63, 94, 0.45);
+}
+
+.heart-btn.wishlisted {
+  border-color: rgb(251, 113, 133);
+  background: rgb(255, 241, 242);
+  box-shadow: 0 1px 4px rgba(244, 63, 94, 0.12);
+}
+
+.heart-btn .heart-svg-wrap {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.heart-btn .heart-outline,
+.heart-btn .heart-filled {
+  fill: var(--heart-color);
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  transition: opacity 0.15s;
+}
+
+.heart-btn .heart-outline {
+  opacity: 1;
+}
+
+.heart-btn .heart-filled {
+  opacity: 0;
+}
+
+.heart-btn.wishlisted .heart-outline {
+  opacity: 0;
+}
+
+.heart-btn.wishlisted .heart-filled {
+  opacity: 1;
+  animation: heart-pop 0.45s cubic-bezier(0.17, 0.89, 0.32, 1.28);
+}
+
+.heart-btn .heart-celebrate {
+  position: absolute;
+  width: 50px;
+  height: 50px;
+  opacity: 0;
+  pointer-events: none;
+  stroke: var(--heart-color);
+  fill: var(--heart-color);
+  stroke-width: 2px;
+}
+
+.heart-btn.wishlisted .heart-celebrate {
+  animation: heart-burst 0.5s ease-out forwards;
+}
+
+@keyframes heart-pop {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  25% {
+    transform: scale(1.3);
+    opacity: 1;
+  }
+  45% {
+    transform: scale(0.9);
+    filter: brightness(1.5);
+  }
+  65% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes heart-burst {
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+  50% {
+    opacity: 1;
+    filter: brightness(1.5);
+  }
+  100% {
+    transform: scale(1.4);
+    opacity: 0;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

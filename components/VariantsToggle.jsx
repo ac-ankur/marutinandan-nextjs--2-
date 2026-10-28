@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
+import SafeImage from "@/components/SafeImage";
 import gsap from "gsap";
 import { variants } from "@/data/products";
 
@@ -98,9 +98,10 @@ export default function VariantsToggle() {
                 className="relative h-full w-full"
                 style={{ clipPath: "url(#blobShape)" }}
               >
-                <Image
+                <SafeImage
                   src={data.image || (active === "black" ? "/images/blackmustard.png" : "/images/yellowmustard.png")}
                   alt={data.name}
+                  fallbackHint={data.name}
                   fill
                   className="object-contain scale-125 transition-transform duration-300"
                   sizes="(max-width: 768px) 480px, 600px"

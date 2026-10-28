@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image";
+import SafeImage from "@/components/SafeImage";
 
 export default function HorizontalGallery({ items }) {
   const [activeHover, setActiveHover] = useState(null);
@@ -136,9 +136,10 @@ export default function HorizontalGallery({ items }) {
                       : "scale-95 opacity-85 sm:scale-100 sm:opacity-100"
                   } ${isHovered ? "sm:scale-105 sm:-translate-y-2" : ""}`}
                 >
-                  <Image
+                  <SafeImage
                     src={item.image}
                     alt={`${item.variantData.name} - ${item.size}`}
+                    fallbackHint={`${item.variantData.name} - ${item.size}`}
                     fill
                     className="object-contain object-center drop-shadow-xl"
                     sizes="(max-width: 768px) 300px, 340px"

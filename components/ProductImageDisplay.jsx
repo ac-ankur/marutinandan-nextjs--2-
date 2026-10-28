@@ -2,10 +2,12 @@
 
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
-import Image from "next/image";
+import SafeImage from "@/components/SafeImage";
+import { useProductVariant } from "@/context/ProductVariantContext";
 
 export default function ProductImageDisplay({ product }) {
   const [showBack, setShowBack] = useState(false);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [scale, setScale] = useState(1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [hovering, setHovering] = useState(false);
@@ -18,8 +20,27 @@ export default function ProductImageDisplay({ product }) {
   const imageRef = useRef(null);
   const dragState = useRef(null);
 
-  const activeSrc = showBack ? product.imageBack : product.image;
-  const viewLabel = showBack ? "Back View" : "Front View";
+  const productVariant = useProductVariant();
+  const selectedVariant = productVariant?.variant;
+  const variantImages = Array.isArray(selectedVariant?.images)
+    ? selectedVariant.images.filter((image) => image?.url)
+    : [];
+  const gallery = variantImages.length
+    ? variantImages
+    : [{ url: product.image, alt: `${product.variantData?.name || "Product"} - ${product.size}` },
+       ...(product.imageBack && product.imageBack !== product.image
+         ? [{ url: product.imageBack, alt: `${product.variantData?.name || "Product"} - Back View` }]
+         : [])];
+
+  useEffect(() => {
+    setActiveImageIndex(0);
+    setShowBack(false);
+    resetZoom();
+  }, [selectedVariant?.id]);
+
+  const activeImage = gallery[activeImageIndex] || gallery[0];
+  const activeSrc = activeImage?.url || product.image;
+  const viewLabel = activeImage?.alt || (showBack ? "Back View" : "Front View");
 
   const zoomIn = () => {
     setScale((s) => Math.min(3, +(s + 0.3).toFixed(1)));
@@ -100,7 +121,7 @@ export default function ProductImageDisplay({ product }) {
         {/* Glow ambient background */}
         <div
           className="pointer-events-none absolute h-72 w-72 rounded-full opacity-35 blur-3xl sm:h-96 sm:w-96"
-          style={{ background: product.variantData.accent }}
+          style={{ background: product.variantData?.accent }}
         />
 
         {/* Top control bar: flip badge + zoom controls, stacked on mobile so nothing overlaps */}
@@ -108,7 +129,10 @@ export default function ProductImageDisplay({ product }) {
           {/* Front / Back View badge & flip button */}
           <button
             type="button"
-            onClick={() => setShowBack(!showBack)}
+            onClick={() => {
+              if (gallery.length > 1) setActiveImageIndex((index) => (index + 1) % gallery.length);
+              else setShowBack(!showBack);
+            }}
             className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-gold-light/30 bg-pine-900/80 px-3 py-1.5 text-[11px] font-semibold text-gold-light backdrop-blur-md transition-all hover:scale-105 hover:bg-pine-800 hover:shadow-lg sm:gap-2 sm:px-4 sm:py-2 sm:text-xs"
             title="Click to flip view"
           >
@@ -172,13 +196,18 @@ export default function ProductImageDisplay({ product }) {
             transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`,
           }}
           onClick={() => {
-            if (scale === 1) setShowBack(!showBack);
+            if (scale === 1 && gallery.length > 1) {
+              setActiveImageIndex((index) => (index + 1) % gallery.length);
+            } else if (scale === 1) {
+              setShowBack(!showBack);
+            }
           }}
         >
-          <Image
+          <SafeImage
             key={activeSrc}
             src={activeSrc}
-            alt={`${product.variantData.name} - ${viewLabel}`}
+            alt={`${product.variantData?.name || "Product"} - ${viewLabel}`}
+            fallbackHint={`${product.variantData?.name || ""} ${product.size || ""}`}
             fill
             className="object-contain drop-shadow-[0_20px_35px_rgba(0,0,0,0.6)]"
             sizes="(max-width: 768px) 300px, 400px"
@@ -205,7 +234,7 @@ export default function ProductImageDisplay({ product }) {
 
         {/* Bottom specification badge */}
         <div className="absolute bottom-3 z-20 flex max-w-[92%] flex-wrap items-center justify-center gap-x-2 gap-y-1 rounded-2xl border border-gold-light/20 bg-pine-950/80 px-3 py-1.5 text-center text-[10px] uppercase tracking-[0.14em] text-cream/80 backdrop-blur-md sm:max-w-none sm:rounded-full sm:px-5 sm:py-2.5 sm:text-xs sm:tracking-[0.18em]">
-          <span className="font-semibold text-gold-light">{product.size}</span>
+          <span className="font-semibold text-gold-light">{selectedVariant?.label || product.size}</span>
           <span>·</span>
           <span>{product.stockUnit}</span>
           <span className="hidden sm:inline">·</span>
@@ -217,11 +246,32 @@ export default function ProductImageDisplay({ product }) {
         </div>
       </div>
 
+      {gallery.length > 1 && (
+        <div className="mt-4 flex flex-wrap justify-center gap-3" aria-label="Product images">
+          {gallery.map((image, index) => (
+            <button
+              key={`${image.url}-${index}`}
+              type="button"
+              onClick={() => {
+                setActiveImageIndex(index);
+                setShowBack(false);
+                resetZoom();
+              }}
+              aria-label={`Show ${image.alt || `image ${index + 1}`}`}
+              aria-pressed={activeImageIndex === index}
+              className={`relative h-16 w-16 overflow-hidden rounded-xl border bg-white p-1 transition ${activeImageIndex === index ? "border-gold-deep ring-2 ring-gold-deep/25" : "border-ink/15 hover:border-gold-deep/60"}`}
+            >
+              <SafeImage src={image.url} alt={image.alt || ""} fill className="object-contain" sizes="64px" />
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Lightbox Modal */}
       {lightboxOpen && (
         <LightboxModal
           src={activeSrc}
-          title={`${product.variantData.name} — ${product.size} (${viewLabel})`}
+          title={`${product.variantData?.name || "Product"} — ${selectedVariant?.label || product.size} (${viewLabel})`}
           onClose={() => setLightboxOpen(false)}
         />
       )}
@@ -316,9 +366,10 @@ function LightboxModal({ src, title, onClose }) {
             transition: dragState.current ? "none" : "transform 0.2s ease-out",
           }}
         >
-          <Image
+          <SafeImage
             src={src}
             alt={title}
+            fallbackHint={title}
             fill
             className="object-contain drop-shadow-2xl"
             sizes="600px"
