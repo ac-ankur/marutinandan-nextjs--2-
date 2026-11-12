@@ -18,6 +18,7 @@ import {
 
 const STATUS_CONFIG = {
   PENDING: { label: "Pending", color: "bg-amber-50 text-amber-700 border-amber-200" },
+  COD_CONFIRMED: { label: "COD Confirmed", color: "bg-amber-50 text-amber-700 border-amber-200" },
   PAID: { label: "Paid", color: "bg-sky-50 text-sky-700 border-sky-200" },
   PACKED: { label: "Packed", color: "bg-indigo-50 text-indigo-700 border-indigo-200" },
   SHIPPED: { label: "Shipped", color: "bg-purple-50 text-purple-700 border-purple-200" },
@@ -429,6 +430,7 @@ function OrderDetailModal({ orderId, onClose, onStatusUpdated, onDownloadInvoice
   const [trackingNumber, setTrackingNumber] = useState("");
   const [statusNotes, setStatusNotes] = useState("");
   const [showStatusForm, setShowStatusForm] = useState(false);
+  const [syncingShiprocket, setSyncingShiprocket] = useState(false);
 
   useEffect(() => {
     const prev = document.body.style.overflow;
@@ -483,6 +485,26 @@ function OrderDetailModal({ orderId, onClose, onStatusUpdated, onDownloadInvoice
       setUpdating(false);
     }
   };
+
+  const handleShiprocketSync = async () => {
+    setSyncingShiprocket(true);
+    setError("");
+    try {
+      await admin.syncShiprocketOrder(orderId);
+      const updated = await admin.order(orderId);
+      setOrder(updated);
+      onStatusUpdated();
+    } catch (err) {
+      setError(formatApiError(err));
+    } finally {
+      setSyncingShiprocket(false);
+    }
+  };
+
+  const paymentMethod = String(order?.paymentMethod || "").toUpperCase();
+  const canSyncShiprocket = paymentMethod === "COD" || paymentMethod === "CASH_ON_DELIVERY"
+    ? ["COD_CONFIRMED", "PAID", "PACKED", "SHIPPED", "OUT_FOR_DELIVERY", "DELIVERED"].includes(order?.status)
+    : ["PAID", "PACKED", "SHIPPED", "OUT_FOR_DELIVERY", "DELIVERED"].includes(order?.status);
 
   const cfg = order ? (STATUS_CONFIG[order.status] || {
     label: order.status,
@@ -557,6 +579,18 @@ function OrderDetailModal({ orderId, onClose, onStatusUpdated, onDownloadInvoice
                 </div>
 
                 <div className="flex items-center gap-2">
+                  {canSyncShiprocket && (
+                    <button
+                      type="button"
+                      onClick={handleShiprocketSync}
+                      disabled={syncingShiprocket}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 disabled:opacity-50 transition-colors"
+                      title="Retry or import this order into Shiprocket"
+                    >
+                      <RefreshCw className={`h-3.5 w-3.5 ${syncingShiprocket ? "animate-spin" : ""}`} />
+                      {syncingShiprocket ? "Syncing…" : "Retry Shiprocket sync"}
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => setShowStatusForm(!showStatusForm)}
@@ -650,6 +684,24 @@ function OrderDetailModal({ orderId, onClose, onStatusUpdated, onDownloadInvoice
                 </form>
               )}
             </div>
+
+            {/* Items List */}
+            {(Array.isArray(order.shipments) && order.shipments.length > 0 || order.shiprocketCancellation?.status) && (
+              <section className="space-y-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-xs font-bold text-slate-900">Shiprocket status</p>
+                  {order.shiprocketCancellation?.status && <span className="text-[11px] text-slate-600">Cancellation: <strong>{order.shiprocketCancellation.status}</strong></span>}
+                </div>
+                {Array.isArray(order.shipments) && order.shipments.length > 0 && <div className="rounded-xl border border-slate-200 bg-slate-50 divide-y divide-slate-200">
+                  {order.shipments.map((shipment, index) => (
+                    <div key={shipment.id || index} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5 text-xs">
+                      <span className="font-medium text-slate-700">{shipment.courierName || shipment.provider || "Shiprocket"}</span>
+                      <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${["FAILED", "ERROR", "CANCEL_FAILED"].includes(String(shipment.status || "").toUpperCase()) ? "border-rose-200 bg-rose-50 text-rose-700" : "border-slate-200 bg-white text-slate-600"}`}>{shipment.status || "Unknown"}</span>
+                    </div>
+                  ))}
+                </div>}
+              </section>
+            )}
 
             {/* Items List */}
             <div className="space-y-2">

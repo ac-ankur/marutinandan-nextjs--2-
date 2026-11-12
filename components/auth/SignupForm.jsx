@@ -44,7 +44,7 @@ export default function SignupForm() {
 
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
-  const [agreeTerms, setAgreeTerms] = useState(true);
+  const [agreeTerms, setAgreeTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState("");
   const [googleNotice, setGoogleNotice] = useState("");
@@ -276,9 +276,9 @@ export default function SignupForm() {
 
         {/* Right Side: Registration Form */}
         <div className="rounded-3xl border border-gold/25 bg-cream-paper p-7 sm:p-10 shadow-[0_25px_70px_-25px_rgba(21,56,38,0.25)] lg:col-span-7">
-          <div className="mb-6">
-            <p className="text-xs font-semibold uppercase tracking-[0.25em] text-gold-deep">New Customer</p>
-            <h1 className="mt-2 font-display text-3xl font-medium text-pine-950 sm:text-4xl">
+          <div className="mb-1">
+
+            <h1 className="mt-1 font-display text-3xl font-medium text-pine-950 sm:text-4xl">
               Create an <span className="italic text-gold-deep">Account</span>
             </h1>
             <p className="mt-1 text-sm text-ink/70">
@@ -493,9 +493,25 @@ export default function SignupForm() {
                   type="checkbox"
                   checked={agreeTerms}
                   onChange={handleTermsChange}
-                  className="mt-0.5 h-4 w-4 rounded border-ink/20 text-pine-900 accent-pine-900 focus:ring-gold"
+                  className="peer sr-only"
                 />
-                <span>
+                <span className="relative mt-0.5 flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-[0.25em] border-2 border-[#FF91AF] text-[#FF91AF] transition-colors peer-checked:bg-[#fff1f5] peer-checked:[&>svg]:[stroke-dashoffset:0] peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[#FF91AF]">
+                  <svg
+                    className="absolute inset-0 h-full w-full overflow-visible duration-500 ease-out [stroke-dasharray:1000] [stroke-dashoffset:1000]"
+                    viewBox="0 0 68 87"
+                    fill="transparent"
+                    aria-hidden="true"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M28.048 74.752c-.74 0-3.428.03-3.674-.175-3.975-3.298-10.07-11.632-12.946-15.92C7.694 53.09 5.626 48.133 3.38 42.035 1.937 38.12 1.116 35.298.93 31.012c-.132-3.034-.706-7.866 0-10.847C2.705 12.67 8.24 7.044 15.801 7.044c1.7 0 3.087-.295 4.55.875 4.579 3.663 5.515 8.992 7.172 14.171.142.443 3.268 6.531 2.1 7.698-.362.363-1.161-10.623-1.05-12.071.26-3.37 1.654-5.522 3.15-8.398 3.226-6.205 7.617-7.873 14.52-7.873 2.861 0 5.343-.274 8.049 1.224 16.654 9.22 14.572 23.568 5.773 37.966-1.793 2.934-3.269 6.477-5.598 9.097-1.73 1.947-4.085 3.36-5.774 5.424-2.096 2.562-3.286 5.29-5.598 7.698-4.797 4.997-9.56 10.065-14.522 14.872-1.64 1.588-10.194 6.916-10.672 7.873-.609 1.217 2.76-.195 4.024-.7"
+                      strokeWidth="8"
+                      pathLength="1000"
+                      stroke="#FF91AF"
+                    />
+                  </svg>
+                </span>
+                <span className="select-none">
                   I agree to the Terms of Service and understand my data will be processed according to the Privacy Policy.
                 </span>
               </label>

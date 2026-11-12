@@ -110,7 +110,7 @@ const CHECKOUT_STEPS = [
 export default function CheckoutFlow() {
   const router = useRouter();
   const { user, isAuthenticated, loading: authLoading } = useAuth();
-  const { refreshCart } = useCart();
+  const { refreshCart, cart: contextCart } = useCart();
 
   // Active Checkout Step:
   // 1: Cart & Issues review
@@ -127,6 +127,12 @@ export default function CheckoutFlow() {
   const [addresses, setAddresses] = useState([]);
   const [addressesLoading, setAddressesLoading] = useState(false);
   const [selectedAddressId, setSelectedAddressId] = useState("");
+  const [paymentMethods, setPaymentMethods] = useState(["ONLINE"]);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("ONLINE");
+  const [shippingQuote, setShippingQuote] = useState(null);
+  const [quoteLoading, setQuoteLoading] = useState(false);
+  const [quoteError, setQuoteError] = useState("");
+  const [quoteRefreshKey, setQuoteRefreshKey] = useState(0);
 
   // Add Address Form modal / drawer
   const [showAddressForm, setShowAddressForm] = useState(false);
@@ -141,6 +147,10 @@ export default function CheckoutFlow() {
 
   const [paymentSubmitting, setPaymentSubmitting] = useState(false);
   const [paymentError, setPaymentError] = useState("");
+  const [paymentStatus, setPaymentStatus] = useState("pending");
+  const [paymentOrder, setPaymentOrder] = useState(null);
+  const [orderStatusRefreshing, setOrderStatusRefreshing] = useState(false);
+  const [verificationResponse, setVerificationResponse] = useState(null);
   const [invoiceDownloading, setInvoiceDownloading] = useState(false);
 
   // Step 1: Load latest cart & server-calculated total (GET /api/v1/cart)
@@ -189,8 +199,46 @@ export default function CheckoutFlow() {
     if (isAuthenticated) {
       fetchLatestCart();
       fetchAddresses();
+      ordersApi.checkoutOptions().then((methods) => {
+        const available = Array.isArray(methods) ? methods : ["ONLINE"];
+        setPaymentMethods(available.includes("ONLINE") ? available : ["ONLINE", ...available]);
+        if (!available.includes(selectedPaymentMethod)) setSelectedPaymentMethod("ONLINE");
+      }).catch(() => setPaymentMethods(["ONLINE"]));
     }
   }, [isAuthenticated, fetchLatestCart, fetchAddresses]);
+
+  useEffect(() => {
+    if (isAuthenticated && contextCart?.items) fetchLatestCart();
+  }, [isAuthenticated, contextCart, fetchLatestCart]);
+
+  useEffect(() => {
+    let active = true;
+    setShippingQuote(null);
+    setQuoteError("");
+    if (step !== 2 || !selectedAddressId || cartLoading || !cartData || !paymentMethods.includes(selectedPaymentMethod)) {
+      setQuoteLoading(false);
+      return undefined;
+    }
+    setQuoteLoading(true);
+    ordersApi.shippingQuote(selectedAddressId, selectedPaymentMethod)
+      .then((quote) => { if (active) setShippingQuote(quote); })
+      .catch((err) => {
+        if (!active) return;
+        if (err?.code === "PINCODE_NOT_SERVICEABLE") setQuoteError("Delivery is unavailable for this address and payment method.");
+        else if (err?.code === "COD_DISABLED") {
+          setQuoteError("Cash on delivery is currently unavailable. Refreshing payment options…");
+          ordersApi.checkoutOptions().then((methods) => {
+            const available = Array.isArray(methods) ? methods : ["ONLINE"];
+            setPaymentMethods(available);
+            if (!available.includes("COD")) setSelectedPaymentMethod("ONLINE");
+          }).catch(() => setPaymentMethods(["ONLINE"]));
+        } else if (["SHIPPING_WEIGHT_MISSING", "SHIPPING_DIMENSIONS_MISSING", "SHIPROCKET_NOT_CONFIGURED", "SHIPROCKET_UNAVAILABLE", "SHIPROCKET_REQUEST_FAILED", "SHIPROCKET_INVALID_RESPONSE", "SHIPROCKET_AUTH_FAILED"].includes(err?.code)) {
+          setQuoteError("We couldn’t get a shipping price. Please retry in a moment or contact support.");
+        } else setQuoteError(formatApiError(err));
+      })
+      .finally(() => { if (active) setQuoteLoading(false); });
+    return () => { active = false; };
+  }, [step, selectedAddressId, selectedPaymentMethod, cartData, paymentMethods, cartLoading, quoteRefreshKey]);
 
   // Handle Adding New Address (POST /api/v1/users/me/addresses)
   const handleSaveAddress = async (e) => {
@@ -250,35 +298,141 @@ export default function CheckoutFlow() {
     setCheckoutSubmitting(true);
     setCheckoutError("");
     try {
-      const order = await ordersApi.checkout(selectedAddressId, "ONLINE");
+      const order = await ordersApi.checkout(selectedAddressId, selectedPaymentMethod);
       setCreatedOrder(order);
+      setPaymentOrder(null);
+      setVerificationResponse(null);
+      setPaymentStatus("pending");
       refreshCart();
-      setStep(3);
+      setStep(selectedPaymentMethod === "COD" ? 4 : 3);
     } catch (err) {
-      setCheckoutError(formatApiError(err));
+      setShippingQuote(null);
+      setQuoteError("Checkout could not be completed. Refresh the delivery quote and review the updated total before trying again.");
+      if (err?.code === "COD_DISABLED") {
+        setCheckoutError("Cash on delivery is currently unavailable. Choose another payment method.");
+        ordersApi.checkoutOptions().then((methods) => {
+          const available = Array.isArray(methods) ? methods : ["ONLINE"];
+          setPaymentMethods(available);
+          setSelectedPaymentMethod("ONLINE");
+        }).catch(() => setPaymentMethods(["ONLINE"]));
+      } else if (err?.code === "PINCODE_NOT_SERVICEABLE") setCheckoutError("Delivery is unavailable for this address and payment method.");
+      else setCheckoutError(formatApiError(err));
     } finally {
       setCheckoutSubmitting(false);
     }
   };
 
-  // Step 4: Simulate Payment (POST /api/v1/payments/simulate/<order-id>)
-  const handleSimulatePayment = async (outcome = "success") => {
+  const verifyRazorpayPayment = async (order, response) => {
+    setPaymentStatus("verifying");
+    setPaymentError("");
+    setVerificationResponse(response);
+    try {
+      const result = await ordersApi.verifyRazorpayPayment({
+        orderId: order.id,
+        razorpay_order_id: response.razorpay_order_id,
+        razorpay_payment_id: response.razorpay_payment_id,
+        razorpay_signature: response.razorpay_signature,
+      });
+      if (result?.paid === true) {
+        const updated = await ordersApi.get(order.id).catch(() => order);
+        setCreatedOrder(updated);
+        setPaymentStatus("paid");
+        setStep(4);
+      } else {
+        setPaymentStatus("pending");
+        setPaymentError("Payment was received but is not confirmed yet. Check payment status or retry verification shortly.");
+      }
+    } catch (err) {
+      setPaymentStatus("verification-needed");
+      setPaymentError(`Payment may have succeeded, but confirmation could not be checked. ${formatApiError(err)}`);
+    }
+  };
+
+  const handleRazorpayPayment = async () => {
     if (!createdOrder?.id) return;
 
     setPaymentSubmitting(true);
     setPaymentError("");
     try {
-      await ordersApi.simulatePayment(createdOrder.id, outcome);
-      const updated = await ordersApi.get(createdOrder.id).catch(() => ({
-        ...createdOrder,
-        status: "PAID",
-      }));
-      setCreatedOrder(updated);
-      setStep(4);
+      if (typeof window === "undefined") return;
+      if (!window.Razorpay) {
+        await new Promise((resolve, reject) => {
+          const existing = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]');
+          if (existing) {
+            existing.addEventListener("load", resolve, { once: true });
+            existing.addEventListener("error", () => reject(new Error("Could not load Razorpay Checkout")), { once: true });
+            return;
+          }
+          const script = document.createElement("script");
+          script.src = "https://checkout.razorpay.com/v1/checkout.js";
+          script.onload = resolve;
+          script.onerror = () => reject(new Error("Could not load Razorpay Checkout"));
+          document.body.appendChild(script);
+        });
+      }
+
+      const currentPaymentOrder = paymentOrder || await ordersApi.createRazorpayOrder(createdOrder.id);
+      if (!currentPaymentOrder?.keyId || !currentPaymentOrder?.razorpayOrderId || !Number.isInteger(currentPaymentOrder?.amountPaise)) {
+        throw new Error("The payment service returned incomplete Razorpay order details.");
+      }
+      if (!paymentOrder) setPaymentOrder(currentPaymentOrder);
+      const selectedAddress = addresses.find((address) => address.id === selectedAddressId);
+      const phoneDigits = String(user?.phone || selectedAddress?.phone || "").replace(/\D/g, "");
+      const contact = phoneDigits.length === 10
+        ? `+91${phoneDigits}`
+        : phoneDigits.length === 12 && phoneDigits.startsWith("91")
+          ? `+${phoneDigits}`
+          : phoneDigits;
+      const checkout = new window.Razorpay({
+        key: currentPaymentOrder.keyId,
+        amount: currentPaymentOrder.amountPaise,
+        currency: currentPaymentOrder.currency || "INR",
+        name: "Yugika Foods",
+        order_id: currentPaymentOrder.razorpayOrderId,
+        prefill: {
+          name: user?.name || selectedAddress?.name || selectedAddress?.fullName || "",
+          email: user?.email || "",
+          ...(contact ? { contact } : {}),
+        },
+        handler: (response) => verifyRazorpayPayment(createdOrder, response),
+        modal: { ondismiss: () => setPaymentStatus("pending") },
+      });
+      checkout.on("payment.failed", (event) => {
+        const description = event?.error?.description;
+        setPaymentStatus("failed");
+        setPaymentError(description || "Payment failed. You can retry securely using the button below.");
+      });
+      checkout.open();
     } catch (err) {
       setPaymentError(formatApiError(err));
     } finally {
       setPaymentSubmitting(false);
+    }
+  };
+
+  const handleRetryVerification = async () => {
+    if (!createdOrder?.id || !verificationResponse) return;
+    await verifyRazorpayPayment(createdOrder, verificationResponse);
+  };
+
+  const handleRefreshPaymentStatus = async () => {
+    if (!createdOrder?.id) return;
+    setOrderStatusRefreshing(true);
+    setPaymentError("");
+    try {
+      const updated = await ordersApi.get(createdOrder.id);
+      setCreatedOrder(updated);
+      if (updated?.paid === true || updated?.paymentStatus === "PAID" || updated?.status === "PAID") {
+        setPaymentStatus("paid");
+        setStep(4);
+      } else {
+        setPaymentStatus("pending");
+        setPaymentError("Payment is still awaiting confirmation. Refresh again shortly or retry verification.");
+      }
+    } catch (err) {
+      setPaymentError(`Could not refresh payment status. ${formatApiError(err)}`);
+    } finally {
+      setOrderStatusRefreshing(false);
     }
   };
 
@@ -313,8 +467,11 @@ export default function CheckoutFlow() {
 
   const subtotalPaise = cartData?.subtotalPaise || 0;
   const discountPaise = cartData?.discountPaise || 0;
-  const shippingPaise = cartData?.shippingPaise || 0;
-  const totalPaise = cartData?.totalPaise || Math.max(0, subtotalPaise - discountPaise + shippingPaise);
+  const quoted = Number.isInteger(shippingQuote?.shippingPaise);
+  const shippingPaise = quoted ? shippingQuote.shippingPaise : cartData?.shippingPaise;
+  const totalPaise = quoted
+    ? Math.max(0, subtotalPaise - discountPaise + shippingPaise)
+    : (cartData?.totalPaise ?? Math.max(0, subtotalPaise - discountPaise));
 
   return (
     <div className="mx-auto w-full max-w-7xl animate-fadeIn">
@@ -591,10 +748,12 @@ export default function CheckoutFlow() {
                 <div className="flex items-center gap-2.5 rounded-2xl border border-emerald-200 bg-emerald-50/70 p-3.5 text-xs text-emerald-800">
                   <Truck className="h-4 w-4 text-emerald-600 flex-shrink-0" />
                   <span>
-                    {shippingPaise === 0 ? (
+                    {shippingPaise == null ? (
+                      <strong>Shipping is calculated after you choose a delivery address.</strong>
+                    ) : shippingPaise === 0 ? (
                       <strong>🎉 Free Standard Shipping applied to this order!</strong>
                     ) : (
-                      <span>Standard delivery applied. Free shipping above ₹1,000.</span>
+                      <span>Delivery price is confirmed for your selected address.</span>
                     )}
                   </span>
                 </div>
@@ -645,6 +804,36 @@ export default function CheckoutFlow() {
                   <div className="flex items-center gap-2 rounded-2xl border border-rose-200 bg-rose-50 p-3.5 text-xs text-rose-800">
                     <AlertCircle className="h-4 w-4 flex-shrink-0 text-rose-600" />
                     <span>{checkoutError}</span>
+                  </div>
+                )}
+
+                <section className="rounded-2xl border border-ink/10 bg-white p-4 space-y-3">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-pine-950">Payment method</h3>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {paymentMethods.map((method) => (
+                      <label key={method} className={`flex cursor-pointer items-center gap-2 rounded-xl border p-3 text-xs ${selectedPaymentMethod === method ? "border-gold-deep bg-gold/10" : "border-ink/10"}`}>
+                        <input type="radio" name="paymentMethod" value={method} checked={selectedPaymentMethod === method} onChange={() => { setSelectedPaymentMethod(method); setCheckoutError(""); }} />
+                        <span className="font-semibold text-pine-950">{method === "COD" ? "Cash on delivery" : "Pay online"}</span>
+                      </label>
+                    ))}
+                  </div>
+                </section>
+
+                {selectedAddressId && (
+                  <div className="rounded-2xl border border-ink/10 bg-white/80 p-4 text-xs space-y-1.5">
+                    <p className="font-semibold text-pine-950">Address shipping quote</p>
+                    {quoteLoading ? <p className="text-ink/60">Getting delivery price…</p> : quoteError ? (
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className="text-rose-700">{quoteError}</p>
+                        <button type="button" onClick={() => setQuoteRefreshKey((key) => key + 1)} className="inline-flex items-center gap-1 rounded-lg border border-pine-900/15 px-2.5 py-1 text-xs font-semibold text-pine-900 hover:bg-pine-900/5">
+                          <Truck className="h-3.5 w-3.5" /> Refresh quote
+                        </button>
+                      </div>
+                    ) : shippingQuote ? (
+                      <p className="text-ink/70">{shippingQuote.freeShipping ? "Free shipping" : rupees(shippingQuote.shippingPaise)}{shippingQuote.courierName ? ` · ${shippingQuote.courierName}` : ""}{shippingQuote.estimatedDelivery ? ` · Est. ${shippingQuote.estimatedDelivery}` : ""}</p>
+                    ) : <p className="text-ink/60">Select an address to see shipping.</p>}
+                    {!quoteLoading && <button type="button" className="font-semibold text-pine-900 underline" onClick={() => setCartData((current) => current ? { ...current } : current)}>Refresh quote</button>}
+                    <p className="text-[10px] text-ink/45">This is a preview. The server confirms shipping again when you place the order.</p>
                   </div>
                 )}
 
@@ -900,7 +1089,7 @@ export default function CheckoutFlow() {
                   <button
                     type="button"
                     onClick={handleProceedToCreateOrder}
-                    disabled={!selectedAddressId || checkoutSubmitting}
+                    disabled={!selectedAddressId || checkoutSubmitting || quoteLoading || !shippingQuote || Boolean(quoteError)}
                     className="flex items-center gap-2 rounded-2xl bg-pine-900 px-6 py-3 text-xs font-semibold text-cream shadow-md transition-all hover:bg-pine-950 hover:shadow-lg disabled:opacity-40"
                   >
                     {checkoutSubmitting ? (
@@ -910,7 +1099,7 @@ export default function CheckoutFlow() {
                       </>
                     ) : (
                       <>
-                        <span>Place Order & Pay</span>
+                        <span>{selectedPaymentMethod === "COD" ? "Place COD Order" : "Place Order & Pay"}</span>
                         <ArrowRight className="h-4 w-4" />
                       </>
                     )}
@@ -949,7 +1138,9 @@ export default function CheckoutFlow() {
                 <div className="flex justify-between">
                   <span>Standard Delivery</span>
                   <span>
-                    {shippingPaise === 0 ? (
+                    {shippingPaise == null ? (
+                      <span className="text-ink/50">Calculated after address selection</span>
+                    ) : shippingPaise === 0 ? (
                       <strong className="text-emerald-700 font-bold uppercase tracking-wider text-[11px]">Free</strong>
                     ) : (
                       rupees(shippingPaise)
@@ -993,79 +1184,100 @@ export default function CheckoutFlow() {
         </div>
       )}
 
-      {/* STEP 3: Payment Gateway Simulation */}
+      {/* STEP 3: Razorpay Checkout */}
       {step === 3 && createdOrder && (
-        <div className="mx-auto max-w-2xl rounded-3xl border border-gold/30 bg-gradient-to-b from-white via-cream-paper/90 to-cream-paper p-6 sm:p-10 shadow-lg space-y-6">
-          <div className="text-center space-y-2 border-b border-ink/8 pb-6">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gold/20 text-gold-deep">
-              <CreditCard className="h-7 w-7" />
-            </div>
-            <h2 className="font-display text-2xl font-bold text-pine-950">
-              Payment Gateway
-            </h2>
-            <p className="text-xs text-ink/60">
-              Order <strong className="text-pine-950">#{createdOrder.orderNumber || createdOrder.id}</strong> has been created on the server!
-            </p>
-          </div>
+        <div className="mx-auto max-w-4xl overflow-hidden rounded-[2rem] border border-pine-900/10 bg-white shadow-[0_28px_80px_-36px_rgba(16,54,38,0.35)]">
+          <div className="grid lg:grid-cols-[1.05fr_0.95fr]">
+            <section className="relative overflow-hidden bg-gradient-to-br from-pine-950 via-pine-900 to-pine-800 px-7 py-8 text-cream sm:px-10 sm:py-11">
+              <div className="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full border border-gold/20" />
+              <div className="pointer-events-none absolute -right-10 -top-14 h-44 w-44 rounded-full border border-gold/20" />
+              <div className="relative">
+                <div className="inline-flex items-center gap-2 rounded-full border border-emerald-300/25 bg-emerald-300/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-emerald-100">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
+                  Order reserved
+                </div>
+                <div className="mt-8 flex h-14 w-14 items-center justify-center rounded-2xl border border-gold/25 bg-gold/10 text-gold-light shadow-inner">
+                  <CreditCard className="h-7 w-7" />
+                </div>
+                <h2 className="mt-5 font-display text-3xl font-bold leading-tight sm:text-4xl">A secure finish<br />to your order.</h2>
+                <p className="mt-3 max-w-sm text-sm leading-6 text-cream/70">
+                  Complete your payment through Razorpay’s secure checkout. We’ll confirm your order as soon as payment is verified.
+                </p>
+                <div className="mt-8 flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <ShieldCheck className="mt-0.5 h-5 w-5 flex-shrink-0 text-emerald-300" />
+                  <div>
+                    <p className="text-sm font-semibold text-white">Your payment stays protected</p>
+                    <p className="mt-1 text-xs leading-5 text-cream/60">Payment details are entered in Razorpay Checkout and are not stored by us.</p>
+                  </div>
+                </div>
+                <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-[11px] font-medium text-cream/65">
+                  <span className="inline-flex items-center gap-1.5"><Lock className="h-3.5 w-3.5 text-gold-light" /> Secure checkout</span>
+                  <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-gold-light" /> Server verified</span>
+                </div>
+              </div>
+            </section>
 
-          {/* Amount Badge */}
-          <div className="flex items-center justify-between rounded-2xl border border-gold/25 bg-gold/10 p-4">
-            <div>
-              <p className="text-xs font-semibold text-pine-950">Amount Payable</p>
-              <p className="text-[11px] text-ink/60">Server-calculated total</p>
-            </div>
-            <p className="font-display text-2xl font-bold text-gold-deep">
-              {rupees(createdOrder.totalPaise || totalPaise)}
-            </p>
-          </div>
+            <section className="flex flex-col justify-center px-6 py-8 sm:px-10 sm:py-11">
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-gold-deep">Payment summary</p>
+              <h3 className="mt-2 font-display text-2xl font-bold text-pine-950">Review and pay</h3>
+              <div className="mt-6 rounded-2xl border border-ink/10 bg-cream-paper/55 p-4 sm:p-5">
+                <div className="flex items-center justify-between gap-4 text-xs">
+                  <span className="text-ink/55">Order number</span>
+                  <span className="max-w-[65%] truncate font-semibold text-pine-950">#{createdOrder.orderNumber || createdOrder.id}</span>
+                </div>
+                <div className="my-4 border-t border-dashed border-ink/15" />
+                <div className="flex items-end justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-pine-950">Total to pay</p>
+                    <p className="mt-1 text-[11px] text-ink/55">Final total confirmed by the server</p>
+                  </div>
+                  <p className="font-display text-3xl font-bold tracking-tight text-pine-900 sm:text-4xl">{rupees(createdOrder.totalPaise || totalPaise)}</p>
+                </div>
+              </div>
 
-          {/* Simulated Mode Info */}
-          <div className="rounded-2xl border border-sky-200 bg-sky-50 p-4 text-xs text-sky-900 space-y-1.5">
-            <div className="flex items-center gap-2 font-bold text-sky-950">
-              <Sparkles className="h-4 w-4 text-sky-600 flex-shrink-0" />
-              <span>Simulated Payment Gateway Active</span>
-            </div>
-            <p className="text-sky-800/80">
-              This environment uses simulated payment endpoints (<code className="text-[10px] bg-sky-100 px-1 py-0.5 rounded">POST /api/v1/payments/simulate/:orderId</code>) so you can test complete end-to-end checkout.
-            </p>
-          </div>
-
-          {paymentError && (
-            <div className="flex items-center gap-2 rounded-2xl border border-rose-200 bg-rose-50 p-3.5 text-xs text-rose-800">
-              <AlertCircle className="h-4 w-4 flex-shrink-0 text-rose-600" />
-              <span>{paymentError}</span>
-            </div>
-          )}
-
-          {/* Payment Action Buttons */}
-          <div className="space-y-3 pt-2">
-            <button
-              type="button"
-              onClick={() => handleSimulatePayment("success")}
-              disabled={paymentSubmitting}
-              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-700 py-3.5 text-sm font-semibold text-white shadow-md transition-all hover:bg-emerald-800 hover:scale-[1.01] disabled:opacity-50"
-            >
-              {paymentSubmitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Authorizing Payment…</span>
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className="h-4 w-4" />
-                  <span>Simulate Payment Success (Pay {rupees(createdOrder.totalPaise || totalPaise)})</span>
-                </>
+              {paymentError && (
+                <div className="mt-5 flex items-start gap-2.5 rounded-xl border border-rose-200 bg-rose-50 p-3.5 text-xs leading-5 text-rose-800">
+                  <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-rose-600" />
+                  <span>{paymentError}</span>
+                </div>
               )}
-            </button>
 
-            <button
-              type="button"
-              onClick={() => handleSimulatePayment("failure")}
-              disabled={paymentSubmitting}
-              className="flex w-full items-center justify-center gap-2 rounded-2xl border border-rose-200 bg-white py-2.5 text-xs font-semibold text-rose-700 hover:bg-rose-50 transition-all disabled:opacity-50"
-            >
-              <span>Test Failure Simulation</span>
-            </button>
+              <div className="mt-6 space-y-3">
+                {!(verificationResponse && ["verifying", "pending", "verification-needed"].includes(paymentStatus)) && <button
+                  type="button"
+                  onClick={handleRazorpayPayment}
+                  disabled={paymentSubmitting}
+                  className="group flex w-full items-center justify-center gap-2.5 rounded-xl bg-emerald-700 px-5 py-4 text-sm font-bold text-white shadow-[0_10px_24px_-12px_rgba(4,120,87,0.75)] transition-all hover:-translate-y-0.5 hover:bg-emerald-800 hover:shadow-lg disabled:translate-y-0 disabled:cursor-wait disabled:opacity-70"
+                >
+                  {paymentSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Lock className="h-4 w-4 transition-transform group-hover:scale-110" />}
+                  <span>{paymentSubmitting ? "Opening secure checkout…" : `Pay ${rupees(createdOrder.totalPaise || totalPaise)} securely`}</span>
+                  {!paymentSubmitting && <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />}
+                </button>}
+
+                {verificationResponse && ["pending", "verification-needed"].includes(paymentStatus) && (
+                  <div className="space-y-2">
+                    <button
+                      type="button"
+                      onClick={handleRetryVerification}
+                      disabled={paymentStatus === "verifying"}
+                      className="flex w-full items-center justify-center rounded-xl border border-gold/35 bg-white py-3 text-xs font-semibold text-pine-900 transition-colors hover:bg-gold/10 disabled:opacity-50"
+                    >
+                      Retry payment verification
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleRefreshPaymentStatus}
+                      disabled={orderStatusRefreshing}
+                      className="flex w-full items-center justify-center gap-2 rounded-xl border border-pine-900/15 bg-white py-3 text-xs font-semibold text-pine-900 transition-colors hover:bg-pine-900/5 disabled:opacity-50"
+                    >
+                      {orderStatusRefreshing && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                      Refresh order status
+                    </button>
+                  </div>
+                )}
+              </div>
+              <p className="mt-4 text-center text-[11px] leading-5 text-ink/50">You’ll be redirected to Razorpay’s payment window. Please keep this page open until verification completes.</p>
+            </section>
           </div>
         </div>
       )}
@@ -1079,7 +1291,7 @@ export default function CheckoutFlow() {
 
           <div className="space-y-1.5">
             <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800 uppercase tracking-wider">
-              Payment Successful & Confirmed
+              {createdOrder.paymentMethod === "COD" || createdOrder.paymentMethod === "CASH_ON_DELIVERY" ? "COD Order Confirmed" : "Payment Successful & Confirmed"}
             </span>
             <h2 className="font-display text-3xl font-bold text-pine-950 mt-2">
               Thank You for Your Order!
@@ -1096,12 +1308,12 @@ export default function CheckoutFlow() {
               <span className="font-bold text-pine-950">#{createdOrder.orderNumber || createdOrder.id}</span>
             </div>
             <div className="flex justify-between border-b border-ink/6 pb-2">
-              <span className="text-ink/50">Amount Paid</span>
-              <span className="font-bold text-emerald-700">{rupees(createdOrder.totalPaise || totalPaise)}</span>
+              <span className="text-ink/50">{createdOrder.paymentMethod === "COD" || createdOrder.paymentMethod === "CASH_ON_DELIVERY" ? "Order Total" : "Amount Paid"}</span>
+              <span className="font-bold text-emerald-700">{rupees(createdOrder.totalPaise ?? totalPaise)}</span>
             </div>
             <div className="flex justify-between border-b border-ink/6 pb-2">
               <span className="text-ink/50">Payment Method</span>
-              <span className="font-semibold text-pine-950">Online Payment (Settled)</span>
+              <span className="font-semibold text-pine-950">{createdOrder.paymentMethod === "COD" || createdOrder.paymentMethod === "CASH_ON_DELIVERY" ? "Cash on delivery (unpaid)" : "Online Payment (Settled)"}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-ink/50">Order Status</span>

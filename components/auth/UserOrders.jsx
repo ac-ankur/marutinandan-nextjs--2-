@@ -41,6 +41,12 @@ const STATUS_CONFIG = {
     icon: Clock,
     step: 1,
   },
+  COD_CONFIRMED: {
+    label: "COD Confirmed",
+    color: "bg-amber-500/15 text-amber-800 border-amber-500/30",
+    icon: CheckCircle2,
+    step: 2,
+  },
   PAID: {
     label: "Payment Confirmed",
     color: "bg-sky-500/15 text-sky-800 border-sky-500/30",
@@ -124,6 +130,7 @@ export default function UserOrders() {
   // Invoice State (GET /orders/:orderNumber/invoice)
   const [downloadingId, setDownloadingId] = useState(null);
   const [actionSuccess, setActionSuccess] = useState("");
+  const [refreshingOrderId, setRefreshingOrderId] = useState(null);
 
   // Fetch orders list (GET /orders?page=1&pageSize=10)
   const fetchOrders = useCallback(async (targetPage = 1) => {
@@ -197,21 +204,44 @@ export default function UserOrders() {
     setCancelError("");
     try {
       const orderIdentifier = cancelModalOrder.orderNumber || cancelModalOrder.id;
-      await ordersApi.cancel(orderIdentifier, cancelReason.trim());
-      setActionSuccess(
-        `Order #${cancelModalOrder.orderNumber || cancelModalOrder.id} has been cancelled successfully.`
-      );
+      const result = await ordersApi.cancel(orderIdentifier, cancelReason.trim());
+      const cancellation = result?.shiprocketCancellation || result?.order?.shiprocketCancellation;
+      const cancellationStatus = cancellation?.status;
+      const cancellationMessage = cancellationStatus === "CANCEL_FAILED"
+        ? " Shiprocket cancellation failed and will be retried automatically."
+        : cancellationStatus === "CANCEL_PENDING"
+          ? " Shiprocket cancellation is pending and will be attempted when the remote order is ready."
+          : cancellationStatus
+            ? ` Shiprocket cancellation: ${cancellationStatus}.`
+            : "";
+      setActionSuccess(`Order #${cancelModalOrder.orderNumber || cancelModalOrder.id} has been cancelled.${cancellationMessage}`);
       setCancelModalOrder(null);
       setCancelReason("");
       if (selectedTimelineOrder?.id === cancelModalOrder.id) {
         setSelectedTimelineOrder(null);
       }
-      fetchOrders(page);
+      const latest = await ordersApi.get(orderIdentifier).catch(() => null);
+      if (latest) setOrders((current) => current.map((order) => order.id === latest.id ? { ...order, ...latest } : order));
+      await fetchOrders(page);
       setTimeout(() => setActionSuccess(""), 5000);
     } catch (err) {
       setCancelError(formatApiError(err));
     } finally {
       setCancelLoading(false);
+    }
+  };
+
+  const refreshOrder = async (order) => {
+    setRefreshingOrderId(order.id);
+    try {
+      const latest = await ordersApi.get(order.orderNumber || order.id);
+      setOrders((current) => current.map((item) => item.id === latest.id ? { ...item, ...latest } : item));
+      setActionSuccess(`Order #${order.orderNumber || order.id} shipment status refreshed.`);
+      setTimeout(() => setActionSuccess(""), 5000);
+    } catch (err) {
+      setError(formatApiError(err));
+    } finally {
+      setRefreshingOrderId(null);
     }
   };
 
@@ -221,7 +251,7 @@ export default function UserOrders() {
     let delivered = 0;
     let cancelled = 0;
     orders.forEach((o) => {
-      if (["PENDING", "PAID", "PACKED", "SHIPPED", "OUT_FOR_DELIVERY"].includes(o.status)) {
+      if (["PENDING", "COD_CONFIRMED", "PAID", "PACKED", "SHIPPED", "OUT_FOR_DELIVERY"].includes(o.status)) {
         active++;
       } else if (o.status === "DELIVERED") {
         delivered++;
@@ -263,7 +293,7 @@ export default function UserOrders() {
       .filter((o) => {
         // Status filter
         if (statusFilter === "ACTIVE") {
-          if (!["PENDING", "PAID", "PACKED", "SHIPPED", "OUT_FOR_DELIVERY"].includes(o.status)) {
+          if (!["PENDING", "COD_CONFIRMED", "PAID", "PACKED", "SHIPPED", "OUT_FOR_DELIVERY"].includes(o.status)) {
             return false;
           }
         } else if (statusFilter === "DELIVERED") {
@@ -699,6 +729,10 @@ export default function UserOrders() {
                         {/* Price breakdown */}
                         <div className="rounded-2xl border border-ink/8 bg-cream/50 p-3.5 text-xs space-y-1">
                           <div className="flex justify-between text-ink/70">
+                            <span>Payment</span>
+                            <span className="font-medium text-pine-950">{["COD", "CASH_ON_DELIVERY"].includes(String(order.paymentMethod || "").toUpperCase()) ? (order.status === "DELIVERED" ? "Cash on delivery" : "Cash on delivery (unpaid)") : "Online"}</span>
+                          </div>
+                          <div className="flex justify-between text-ink/70">
                             <span>Subtotal</span>
                             <span>{rupees(order.subtotalPaise)}</span>
                           </div>
@@ -721,11 +755,38 @@ export default function UserOrders() {
                             </div>
                           )}
                           <div className="flex justify-between font-bold text-pine-950 pt-1 text-sm border-t border-ink/10">
-                            <span>Total Paid</span>
+                            <span>Order total</span>
                             <span>{order.total || rupees(order.totalPaise)}</span>
                           </div>
                         </div>
                       </div>
+                      {(order.shiprocketCancellation || order.shipments?.length > 0) && (
+                        <div className="rounded-2xl border border-ink/8 bg-cream/50 p-3.5 text-xs">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <p className="font-semibold text-pine-950">Shipping provider status</p>
+                            <button
+                              type="button"
+                              onClick={() => refreshOrder(order)}
+                              disabled={refreshingOrderId === order.id}
+                              className="inline-flex items-center gap-1.5 rounded-full border border-pine-900/20 bg-white px-3 py-1.5 text-[11px] font-semibold text-pine-900 hover:bg-pine-900/5 disabled:opacity-50"
+                            >
+                              <RefreshCw className={`h-3 w-3 ${refreshingOrderId === order.id ? "animate-spin" : ""}`} />
+                              Refresh shipment status
+                            </button>
+                          </div>
+                          {order.shiprocketCancellation?.status && (
+                            <p className="mt-2 text-ink/70">Shiprocket cancellation: <span className="font-semibold text-pine-950">{order.shiprocketCancellation.status}</span></p>
+                          )}
+                          {Array.isArray(order.shipments) && order.shipments.length > 0 && (
+                            <ul className="mt-2 space-y-1 text-ink/70">
+                              {order.shipments.map((shipment, index) => (
+                                <li key={shipment.id || index}>{shipment.courierName || shipment.provider || "Shiprocket"}: <span className="font-semibold text-pine-950">{shipment.status || "Status unavailable"}</span></li>
+                              ))}
+                            </ul>
+                          )}
+                          {order.status === "CANCELLED" && <p className="mt-2 text-[11px] leading-5 text-ink/60">If a courier or AWB was already booked manually, cancel that shipment in the Shiprocket dashboard too.</p>}
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -778,7 +839,7 @@ export default function UserOrders() {
                       </button>
 
                       {/* Cancel Order (POST /orders/:orderNumber/cancel) */}
-                      {(order.canCancel ?? ["PENDING", "PAID"].includes(order.status)) && (
+                      {(order.canCancel ?? ["PENDING", "COD_CONFIRMED", "PAID"].includes(order.status)) && (
                         <button
                           type="button"
                           onClick={() => {
@@ -1158,6 +1219,7 @@ export default function UserOrders() {
               Are you sure you want to cancel this order? Any reserved inventory will be released and
               the cancellation request is irreversible.
             </p>
+            {cancelModalOrder.shipments?.length > 0 && <p className="mt-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-[11px] leading-5 text-amber-900">The API will request cancellation of the Shiprocket order. If a courier or AWB was already booked manually, cancel that shipment in Shiprocket as well.</p>}
 
             <form onSubmit={handleCancelSubmit} className="mt-4 space-y-4">
               {/* Preset Reason Chips */}

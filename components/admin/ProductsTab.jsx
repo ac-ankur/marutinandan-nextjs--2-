@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { createPortal } from "react-dom";
 import { admin, rupees, formatApiError } from "@/lib/api";
 import { getStaticFallback } from "@/components/SafeImage";
@@ -691,6 +692,8 @@ function AddProductModal({ categories, onClose, onSuccess }) {
       ],
     },
   ]);
+  const [activeVariantIndex, setActiveVariantIndex] = useState(0);
+  const [variantTurnDirection, setVariantTurnDirection] = useState(1);
 
   const [images, setImages] = useState([
     { url: "https://your-image-host.com/kachi-ghani-lifestyle.jpg", alt: "Mustard oil product lifestyle", sortOrder: 0 },
@@ -728,6 +731,8 @@ function AddProductModal({ categories, onClose, onSuccess }) {
 
   // Variants
   const addVariant = () => {
+    setVariantTurnDirection(1);
+    setActiveVariantIndex(variants.length);
     setVariants((prev) => [
       ...prev,
       {
@@ -747,7 +752,14 @@ function AddProductModal({ categories, onClose, onSuccess }) {
     ]);
   };
   const removeVariant = (index) => {
+    const nextLength = variants.length - 1;
     setVariants((prev) => prev.filter((_, i) => i !== index));
+    if (index < activeVariantIndex) setActiveVariantIndex((current) => current - 1);
+    else if (index === activeVariantIndex) setActiveVariantIndex(Math.min(index, nextLength - 1));
+  };
+  const turnVariantPage = (direction) => {
+    setVariantTurnDirection(direction);
+    setActiveVariantIndex((current) => Math.max(0, Math.min(variants.length - 1, current + direction)));
   };
   const updateVariant = (index, field, value) => {
     setVariants((prev) =>
@@ -1074,7 +1086,7 @@ function AddProductModal({ categories, onClose, onSuccess }) {
                       </button>
                     </div>
 
-                    <div className="space-y-3 max-h-56 overflow-y-auto pr-1">
+                    <div className="space-y-3">
                       {images.map((img, idx) => (
                         <div key={idx} className="flex items-center gap-2.5 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
                           <input
@@ -1129,20 +1141,23 @@ function AddProductModal({ categories, onClose, onSuccess }) {
                         <p className="text-[11px] text-slate-400">Pack sizes, pricing, dimensions, and variant photos</p>
                       </div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={addVariant}
-                      className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-3.5 py-1.5 rounded-xl border border-emerald-300/80 transition-colors shadow-2xs"
-                    >
-                      <Plus className="h-4 w-4" />
-                      <span>+ Add Another Variant</span>
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-semibold text-slate-500">{activeVariantIndex + 1} / {variants.length}</span>
+                      <button type="button" onClick={() => turnVariantPage(-1)} disabled={activeVariantIndex === 0} className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-600 disabled:opacity-40">Previous</button>
+                      <button type="button" onClick={() => turnVariantPage(1)} disabled={activeVariantIndex >= variants.length - 1} className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-600 disabled:opacity-40">Next</button>
+                    </div>
                   </div>
 
-                  <div className="space-y-4 max-h-[64vh] overflow-y-auto pr-1">
-                    {variants.map((v, vIdx) => (
-                      <div
+                  <div className="relative [perspective:1400px]">
+                    <AnimatePresence mode="wait" initial={false}>
+                    {variants.map((v, vIdx) => vIdx === activeVariantIndex && (
+                      <motion.div
                         key={vIdx}
+                        initial={{ opacity: 0, rotateY: variantTurnDirection * 72, x: variantTurnDirection * 26 }}
+                        animate={{ opacity: 1, rotateY: 0, x: 0 }}
+                        exit={{ opacity: 0, rotateY: variantTurnDirection * -55, x: variantTurnDirection * -20 }}
+                        transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
+                        style={{ transformOrigin: variantTurnDirection > 0 ? "left center" : "right center", backfaceVisibility: "hidden" }}
                         className="rounded-2xl border border-slate-200/90 bg-slate-50/80 p-5 space-y-3.5 shadow-2xs relative"
                       >
                         {/* Variant Card Header */}
@@ -1356,9 +1371,18 @@ function AddProductModal({ categories, onClose, onSuccess }) {
                             ))}
                           </div>
                         </div>
-                      </div>
+                      </motion.div>
                     ))}
+                    </AnimatePresence>
                   </div>
+                  <button
+                    type="button"
+                    onClick={addVariant}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-emerald-300 bg-emerald-50/60 px-4 py-3 text-sm font-semibold text-emerald-800 transition-colors hover:border-emerald-400 hover:bg-emerald-50"
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span>Add Another Variant</span>
+                  </button>
                 </div>
               </div>
             </div>

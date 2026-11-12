@@ -11,7 +11,16 @@ import { company } from "@/data/company";
 import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
-import { UserRound, LogOut, Shield, ShoppingBag, Heart } from "lucide-react";
+import {
+  UserRound,
+  LogOut,
+  Shield,
+  ShoppingBag,
+  Heart,
+  MessageCircle,
+  ChevronDown,
+  ChevronRight,
+} from "lucide-react";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -20,9 +29,17 @@ const LINKS = [
   { href: "/products", label: "Products" },
   { href: "/our-process", label: "Our Process" },
   { href: "/lab-report", label: "Quality" },
-  { href: "/why-cold-pressed", label: "Why Cold-Pressed" },
+  // { href: "/why-cold-pressed", label: "Why Cold-Pressed" },
   { href: "/contact", label: "Contact" },
 ];
+
+const AUTHENTICATED_HIDDEN_LINKS = new Set([
+  "/about",
+  "/our-process",
+  "/lab-report",
+  "/why-cold-pressed",
+  "/contact",
+]);
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -35,6 +52,9 @@ export default function Navbar() {
   const [userDropdown, setUserDropdown] = useState(false);
 
   const isAdmin = pathname?.startsWith("/admin");
+  const visibleLinks = user
+    ? LINKS.filter((link) => !AUTHENTICATED_HIDDEN_LINKS.has(link.href))
+    : LINKS;
 
   useEffect(() => {
     if (isAdmin || !navRef.current) return;
@@ -138,7 +158,7 @@ export default function Navbar() {
         </Link>
 
         <nav className="hidden items-center gap-7 lg:flex">
-          {LINKS.map((l) => (
+          {visibleLinks.map((l) => (
             <Link
               key={l.href}
               href={l.href}
@@ -155,24 +175,40 @@ export default function Navbar() {
               <button
                 type="button"
                 onClick={() => setUserDropdown((prev) => !prev)}
-                className="flex items-center gap-2 rounded-full border border-pine-800/25 bg-pine-900/5 px-3.5 py-1.5 text-xs font-semibold text-pine-950 transition-all hover:border-gold hover:bg-gold/15"
+                aria-expanded={userDropdown}
+                aria-haspopup="menu"
+                className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold text-pine-950 shadow-sm transition-all ${
+                  userDropdown
+                    ? "border-gold bg-white shadow-md"
+                    : "border-pine-800/15 bg-white/70 hover:border-gold/70 hover:bg-white hover:shadow-md"
+                }`}
               >
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-pine-900 text-[10px] text-cream">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-pine-700 to-pine-950 text-[10px] text-cream ring-2 ring-gold/30">
                   {user.name ? user.name.charAt(0).toUpperCase() : "U"}
                 </span>
                 <span className="max-w-[100px] truncate">{user.name?.split(" ")[0] || "Account"}</span>
+                <ChevronDown className={`h-3.5 w-3.5 text-pine-800/60 transition-transform ${userDropdown ? "rotate-180" : ""}`} />
               </button>
 
               {userDropdown && (
                 <div
                   onMouseLeave={() => setUserDropdown(false)}
-                  className="absolute right-0 top-full mt-2 w-52 rounded-2xl border border-gold/30 bg-cream-paper p-2 shadow-xl backdrop-blur-sm"
+                  role="menu"
+                  className="absolute right-0 top-full mt-3 w-64 overflow-hidden rounded-3xl border border-white/80 bg-white/95 p-2 shadow-[0_20px_60px_-18px_rgba(20,54,34,0.35)] ring-1 ring-pine-950/5 backdrop-blur-xl"
                 >
-                  <div className="border-b border-ink/10 px-3 py-2">
-                    <p className="truncate text-xs font-semibold text-pine-950">{user.name}</p>
-                    <p className="truncate text-[10px] text-ink/60">{user.email}</p>
+                  <div className="relative mb-1 overflow-hidden rounded-2xl bg-gradient-to-br from-pine-900 to-pine-800 px-4 py-4 text-white">
+                    <span className="absolute -right-5 -top-8 h-24 w-24 rounded-full border-[14px] border-white/5" aria-hidden="true" />
+                    <div className="relative flex items-center gap-3">
+                      <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl border border-white/20 bg-white/10 font-display text-lg font-semibold text-gold-light shadow-inner">
+                        {user.name ? user.name.charAt(0).toUpperCase() : "U"}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold">{user.name || "Welcome"}</p>
+                        <p className="mt-0.5 truncate text-[11px] text-white/65">{user.email}</p>
+                      </div>
+                    </div>
                     {user.role && (
-                      <span className="mt-1 inline-block rounded-full bg-pine-900/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-pine-900">
+                      <span className="relative mt-3 inline-flex rounded-full border border-white/15 bg-white/10 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-gold-light">
                         {user.role}
                       </span>
                     )}
@@ -180,46 +216,72 @@ export default function Navbar() {
                   <Link
                     href="/account"
                     onClick={() => setUserDropdown(false)}
-                    className="mt-1 flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-medium text-ink transition-colors hover:bg-pine-900/5"
+                    role="menuitem"
+                    className="group flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium text-ink transition-colors hover:bg-pine-50"
                   >
-                    <UserRound className="h-3.5 w-3.5" />
-                    <span>My Account</span>
+                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-pine-50 text-pine-800 transition-colors group-hover:bg-white">
+                      <UserRound className="h-4 w-4" />
+                    </span>
+                    <span className="flex-1">My Account</span>
+                    <ChevronRight className="h-4 w-4 text-pine-900/25 transition-transform group-hover:translate-x-0.5 group-hover:text-pine-800" />
                   </Link>
                   <Link
                     href="/account?tab=wishlist"
                     onClick={() => setUserDropdown(false)}
-                    className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-medium text-ink transition-colors hover:bg-rose-50 hover:text-rose-700"
+                    role="menuitem"
+                    className="group flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium text-ink transition-colors hover:bg-rose-50 hover:text-rose-700"
                   >
-                    <span className="flex items-center gap-2">
-                      <Heart className="h-3.5 w-3.5 text-rose-500 fill-rose-500" />
-                      <span>My Wishlist</span>
+                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-50 text-rose-500 transition-colors group-hover:bg-white">
+                      <Heart className="h-4 w-4 fill-current" />
                     </span>
-                    {wishlistCount > 0 && (
-                      <span className="rounded-full bg-rose-500 px-1.5 py-0.2 text-[10px] font-bold text-white">
+                    <span className="flex-1">My Wishlist</span>
+                    {wishlistCount > 0 ? (
+                      <span className="rounded-full bg-rose-500 px-2 py-0.5 text-[10px] font-bold text-white">
                         {wishlistCount}
                       </span>
+                    ) : (
+                      <ChevronRight className="h-4 w-4 text-pine-900/25 transition-transform group-hover:translate-x-0.5 group-hover:text-rose-600" />
                     )}
+                  </Link>
+                  <Link
+                    href="/contact"
+                    onClick={() => setUserDropdown(false)}
+                    role="menuitem"
+                    className="group flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium text-ink transition-colors hover:bg-gold/10 hover:text-pine-900"
+                  >
+                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gold/10 text-gold-deep transition-colors group-hover:bg-white">
+                      <MessageCircle className="h-4 w-4" />
+                    </span>
+                    <span className="flex-1">Contact Us</span>
+                    <ChevronRight className="h-4 w-4 text-pine-900/25 transition-transform group-hover:translate-x-0.5 group-hover:text-pine-800" />
                   </Link>
                   {user.role?.toUpperCase() === "ADMIN" && (
                     <Link
                       href="/admin"
                       onClick={() => setUserDropdown(false)}
-                      className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-medium text-ink transition-colors hover:bg-pine-900/5"
+                      role="menuitem"
+                      className="group flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium text-ink transition-colors hover:bg-pine-50"
                     >
-                      <Shield className="h-3.5 w-3.5" />
-                      <span>Admin Dashboard</span>
+                      <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-pine-50 text-pine-800 group-hover:bg-white">
+                        <Shield className="h-4 w-4" />
+                      </span>
+                      <span className="flex-1">Admin Dashboard</span>
+                      <ChevronRight className="h-4 w-4 text-pine-900/25 transition-transform group-hover:translate-x-0.5 group-hover:text-pine-800" />
                     </Link>
                   )}
-                  <div className="my-1 border-t border-ink/8" />
+                  <div className="mx-2 my-2 border-t border-pine-900/10" />
                   <button
                     type="button"
                     onClick={() => {
                       setUserDropdown(false);
                       logout();
                     }}
-                    className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-medium text-red-700 transition-colors hover:bg-red-50"
+                    role="menuitem"
+                    className="group flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium text-red-700 transition-colors hover:bg-red-50"
                   >
-                    <LogOut className="h-3.5 w-3.5" />
+                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-red-50 text-red-600 transition-colors group-hover:bg-white">
+                      <LogOut className="h-4 w-4" />
+                    </span>
                     <span>Sign Out</span>
                   </button>
                 </div>
@@ -228,10 +290,14 @@ export default function Navbar() {
           ) : (
             <Link
               href="/login"
-              className="flex items-center gap-1.5 rounded-full border border-gold/50 bg-pine-900 px-4 py-1.5 text-xs font-semibold text-cream shadow-sm transition-all hover:bg-pine-800 hover:scale-[1.02]"
+              data-cursor-hover
+              className="group relative inline-flex h-8 items-center gap-1.5 overflow-hidden rounded-full border border-gold/70 bg-gradient-to-br from-pine-800 via-pine-900 to-pine-950 px-3 text-[11px] font-semibold tracking-wide text-cream shadow-[0_4px_12px_rgba(10,72,35,0.2)] transition-all duration-300 before:absolute before:inset-0 before:-translate-x-full before:bg-gradient-to-r before:from-transparent before:via-white/10 before:to-transparent before:transition-transform before:duration-700 hover:-translate-y-0.5 hover:border-gold-light hover:shadow-[0_8px_18px_rgba(10,72,35,0.28)] hover:before:translate-x-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-cream active:translate-y-0"
             >
-              <UserRound className="h-3.5 w-3.5 text-gold-light" />
-              <span>Sign In</span>
+              <span className="relative flex h-5 w-5 items-center justify-center rounded-full border border-gold/35 bg-gold/15 text-gold-light transition-colors group-hover:bg-gold/25">
+                <UserRound className="h-3 w-3" />
+              </span>
+              <span className="relative">Sign In</span>
+              <ChevronRight className="relative h-3 w-3 text-gold-light/80 transition-transform duration-300 group-hover:translate-x-0.5" />
             </Link>
           )}
 
@@ -315,7 +381,7 @@ export default function Navbar() {
         }`}
       >
         <div className="flex flex-col gap-4 px-4 pb-6 sm:px-6">
-          {LINKS.map((l) => (
+          {visibleLinks.map((l) => (
             <Link key={l.href} href={l.href} onClick={() => setOpen(false)} className="text-base text-ink/80">
               {l.label}
             </Link>
@@ -323,47 +389,75 @@ export default function Navbar() {
 
           <div className="border-t border-gold/20 pt-3">
             {user ? (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-semibold text-pine-950">{user.name}</p>
-                    <p className="text-xs text-ink/60">{user.email}</p>
-                    {user.role && (
-                      <span className="mt-1 inline-block rounded-full bg-pine-900/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-pine-900">
-                        {user.role}
-                      </span>
-                    )}
+              <div className="overflow-hidden rounded-3xl border border-pine-900/10 bg-white shadow-lg shadow-pine-950/5">
+                <div className="flex items-center gap-3 bg-gradient-to-r from-pine-900 to-pine-800 px-4 py-4 text-white">
+                  <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl border border-white/20 bg-white/10 font-display text-lg font-semibold text-gold-light">
+                    {user.name ? user.name.charAt(0).toUpperCase() : "U"}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold">{user.name || "Welcome"}</p>
+                    <p className="truncate text-xs text-white/65">{user.email}</p>
                   </div>
+                  {user.role && (
+                    <span className="rounded-full border border-white/15 bg-white/10 px-2 py-1 text-[9px] font-semibold uppercase tracking-wider text-gold-light">
+                      {user.role}
+                    </span>
+                  )}
                 </div>
-                <div className="flex gap-2">
+                <div className="grid grid-cols-2 gap-2 p-3">
                   <Link
                     href="/account"
                     onClick={() => setOpen(false)}
-                    className="flex-1 rounded-full bg-pine-900 py-2.5 text-center text-xs font-semibold text-cream"
+                    className="flex items-center justify-center gap-2 rounded-2xl bg-pine-900 px-3 py-3 text-xs font-semibold text-cream shadow-sm transition-colors hover:bg-pine-800"
                   >
+                    <UserRound className="h-4 w-4" />
                     My Account
                   </Link>
+                  <Link
+                    href="/contact"
+                    onClick={() => setOpen(false)}
+                    className="flex items-center justify-center gap-2 rounded-2xl border border-gold/30 bg-gold/10 px-3 py-3 text-xs font-semibold text-pine-900 transition-colors hover:bg-gold/20"
+                  >
+                    <MessageCircle className="h-4 w-4 text-gold-deep" />
+                    Contact Us
+                  </Link>
+                  <Link
+                    href="/account?tab=wishlist"
+                    onClick={() => setOpen(false)}
+                    className="col-span-2 flex items-center justify-between rounded-2xl bg-rose-50/80 px-3 py-3 text-xs font-semibold text-pine-950 transition-colors hover:bg-rose-100"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Heart className="h-4 w-4 fill-rose-500 text-rose-500" />
+                      My Wishlist
+                    </span>
+                    {wishlistCount > 0 && (
+                      <span className="rounded-full bg-rose-500 px-2 py-0.5 text-[10px] font-bold text-white">
+                        {wishlistCount}
+                      </span>
+                    )}
+                  </Link>
+                  {user.role?.toUpperCase() === "ADMIN" && (
+                    <Link
+                      href="/admin"
+                      onClick={() => setOpen(false)}
+                      className="col-span-2 flex items-center justify-center gap-2 rounded-2xl border border-pine-900/10 bg-pine-50 px-3 py-3 text-xs font-semibold text-pine-900 transition-colors hover:bg-pine-100"
+                    >
+                      <Shield className="h-4 w-4" />
+                      Admin Dashboard
+                    </Link>
+                  )}
                   <button
+                    type="button"
                     onClick={() => {
                       setOpen(false);
                       logout();
                     }}
-                    className="flex items-center justify-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-4 py-2.5 text-xs font-medium text-red-700"
+                    className="col-span-2 flex items-center justify-center gap-2 rounded-2xl border border-red-100 bg-red-50 px-3 py-3 text-xs font-semibold text-red-700 transition-colors hover:bg-red-100"
                   >
-                    <LogOut className="h-3.5 w-3.5" />
+                    <LogOut className="h-4 w-4" />
                     <span>Sign Out</span>
                   </button>
                 </div>
-                {user.role?.toUpperCase() === "ADMIN" && (
-                  <Link
-                    href="/admin"
-                    onClick={() => setOpen(false)}
-                    className="flex items-center justify-center gap-1.5 rounded-full border border-gold/50 bg-gold/10 py-2.5 text-xs font-semibold text-pine-950"
-                  >
-                    <Shield className="h-3.5 w-3.5" />
-                    <span>Admin Dashboard</span>
-                  </Link>
-                )}
               </div>
             ) : (
               <div className="flex gap-2">

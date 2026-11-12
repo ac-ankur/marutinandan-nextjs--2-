@@ -37,6 +37,7 @@ import CouponsTab from "./CouponsTab";
 import OffersTab from "./OffersTab";
 import EnquiriesTab from "./EnquiriesTab";
 import ReviewsTab from "./ReviewsTab";
+import ShippingSettingsTab from "./ShippingSettingsTab";
 
 const NAV_ITEMS = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
@@ -48,6 +49,7 @@ const NAV_ITEMS = [
   { id: "offers", label: "Promotional Offers", icon: Sparkles },
   { id: "enquiries", label: "Customer Inquiries", icon: FileText },
   { id: "reviews", label: "Reviews Moderation", icon: Star },
+  { id: "shipping", label: "Shipping & COD", icon: Settings },
 ];
 
 export default function AdminConsole() {
@@ -378,6 +380,7 @@ export default function AdminConsole() {
             {activeTab === "offers" && <OffersTab />}
             {activeTab === "enquiries" && <EnquiriesTab />}
             {activeTab === "reviews" && <ReviewsTab />}
+            {activeTab === "shipping" && <ShippingSettingsTab />}
           </div>
         </main>
       </div>
