@@ -161,11 +161,13 @@ export default function CartDrawer() {
   const items = cart?.items || [];
   const subtotalPaise = cart?.subtotalPaise || 0;
   const discountPaise = cart?.discountPaise || 0;
-  const shippingPaise = cart?.shippingPaise || 0;
+  const shippingPaise = cart?.shippingPaise ?? null;
   const totalPaise = cart?.totalPaise || 0;
-  const freeShippingThreshold = 100000; // ₹1,000 in paise
-  const progressPercent = Math.min(100, Math.round((subtotalPaise / freeShippingThreshold) * 100));
-  const remainingForFreeShipping = Math.max(0, freeShippingThreshold - subtotalPaise);
+  const freeShippingThreshold = cart?.freeShippingThresholdPaise;
+  const remainingForFreeShipping = cart?.freeShippingRemainingPaise;
+  const progressPercent = freeShippingThreshold > 0
+    ? Math.min(100, Math.round((subtotalPaise / freeShippingThreshold) * 100))
+    : 0;
 
   return (
     <>
@@ -210,7 +212,7 @@ export default function CartDrawer() {
         </div>
 
         {/* Free Delivery Goal Tracker */}
-        {itemCount > 0 && (
+        {itemCount > 0 && freeShippingThreshold > 0 && Number.isInteger(remainingForFreeShipping) ? (
           <div className="flex-shrink-0 border-b border-ink/10 bg-cream/70 px-5 py-3 sm:px-6">
             <div className="flex items-center justify-between text-xs font-medium">
               <span className="flex items-center gap-1.5 text-pine-900">
@@ -234,7 +236,11 @@ export default function CartDrawer() {
               />
             </div>
           </div>
-        )}
+        ) : itemCount > 0 ? (
+          <div className="flex-shrink-0 border-b border-ink/10 bg-cream/70 px-5 py-3 text-xs text-ink/60 sm:px-6">
+            Delivery fee is calculated after you choose a delivery address.
+          </div>
+        ) : null}
 
         {/* Messages / Alerts */}
         {couponSuccess && (
@@ -484,7 +490,9 @@ export default function CartDrawer() {
               <div className="flex justify-between">
                 <span>Standard Delivery</span>
                 <span>
-                  {shippingPaise === 0 ? (
+                  {shippingPaise == null ? (
+                    <span className="text-ink/50">Calculated at checkout</span>
+                  ) : shippingPaise === 0 ? (
                     <strong className="text-emerald-700 uppercase tracking-wider text-[11px]">Free</strong>
                   ) : (
                     rupees(shippingPaise)
@@ -500,7 +508,7 @@ export default function CartDrawer() {
               )}
 
               <div className="border-t border-ink/10 pt-2 flex justify-between font-display text-base font-bold text-pine-900">
-                <span>Total Amount</span>
+                <span>{shippingPaise == null ? "Total before delivery" : "Total Amount"}</span>
                 <span className="text-gold-deep text-lg">{rupees(totalPaise)}</span>
               </div>
             </div>

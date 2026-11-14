@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
-import SafeImage from "@/components/SafeImage";
+import Image from "next/image";
 import gsap from "gsap";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { variants } from "@/data/products";
@@ -176,42 +176,93 @@ export default function VariantsToggle() {
               style={{ background: data.accent }}
             />
 
-            {/* SVG blob mask: feathers the rectangular image into a soft organic edge */}
-            <svg width="0" height="0" className="absolute">
-              <defs>
-                <filter id="softBlobEdge" x="-30%" y="-30%" width="160%" height="160%">
-                  <feGaussianBlur in="SourceGraphic" stdDeviation="24" result="blur" />
-                  <feColorMatrix
-                    in="blur"
-                    mode="matrix"
-                    values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -9"
-                    result="soft"
-                  />
-                  <feComposite in="SourceGraphic" in2="soft" operator="atop" />
-                </filter>
-                <clipPath id="blobShape" clipPathUnits="objectBoundingBox">
-                  <path d="M0.5,0.03 C0.75,0.02 0.97,0.18 0.98,0.45 C0.99,0.68 0.93,0.85 0.72,0.94 C0.55,1.01 0.32,0.99 0.15,0.87 C0.02,0.77 0.01,0.55 0.03,0.38 C0.06,0.16 0.28,0.04 0.5,0.03 Z" />
-                </clipPath>
-              </defs>
-            </svg>
+            {/* Main Stage Card */}
+            <div className="relative w-full rounded-3xl border border-gold-light/15 bg-pine-950/60 p-4 sm:p-6 backdrop-blur-sm shadow-2xl overflow-hidden">
 
-            <div
-              className="relative h-[460px] w-full max-w-[480px] sm:h-[540px] sm:max-w-[560px] lg:h-[600px] lg:max-w-[600px]"
-              style={{ filter: "url(#softBlobEdge)" }}
-            >
-              <div
-                className="relative h-full w-full"
-                style={{ clipPath: "url(#blobShape)" }}
-              >
-                <SafeImage
-                  src={data.image || (active === "black" ? "/images/blackmustard.png" : "/images/yellowmustard.png")}
-                  alt={data.name}
-                  fallbackHint={data.name}
-                  fill
-                  className="object-contain scale-125 transition-transform duration-300"
-                  sizes="(max-width: 768px) 480px, 600px"
-                  priority
-                />
+              {/* Top Bar: Slide Name / Tag & Pungency Badge */}
+              <div className="flex items-center justify-between gap-3 relative z-10 mb-2">
+                <div className="flex items-center gap-2 rounded-full border border-gold-light/25 bg-pine-900/80 px-3 py-1.5 backdrop-blur-md shadow-sm">
+                  <span className="h-2 w-2 rounded-full bg-gold animate-pulse" />
+                  <span className="text-xs font-medium text-gold-light tracking-wide">
+                    {currentSlideData.name}
+                  </span>
+                </div>
+
+                <div className="rounded-2xl border border-gold-light/30 bg-pine-950/85 px-3.5 py-1.5 text-center backdrop-blur-md shadow-lg sm:px-4 sm:py-2">
+                  <p className="text-[9px] font-medium uppercase tracking-[0.2em] text-gold-light">Pungency</p>
+                  <p className="font-display text-lg sm:text-xl text-gold-light leading-tight">{data.pungency}</p>
+                </div>
+              </div>
+
+              {/* Central Stage: Image Carousel */}
+              <div className="relative h-[360px] w-full sm:h-[430px] lg:h-[460px] flex items-center justify-center">
+                {/* Pedestal Shadow */}
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-3/4 h-8 bg-black/50 blur-xl rounded-full pointer-events-none" />
+
+                {slides.map((slide, idx) => (
+                  <div
+                    key={slide.src + idx}
+                    className={`absolute inset-0 flex items-center justify-center p-4 transition-all duration-700 ease-out ${
+                      idx === activeSlide
+                        ? "opacity-100 scale-100 pointer-events-auto"
+                        : "opacity-0 scale-95 pointer-events-none"
+                    }`}
+                  >
+                    <div className="relative h-full w-full max-w-[420px]">
+                      <Image
+                        src={slide.src}
+                        alt={`${data.name} - ${slide.name}`}
+                        fill
+                        className="object-contain drop-shadow-[0_25px_35px_rgba(0,0,0,0.55)] transition-transform duration-700 hover:scale-105"
+                        sizes="(max-width: 768px) 380px, 500px"
+                        priority={idx === 0}
+                      />
+                    </div>
+                  </div>
+                ))}
+
+                {/* Left Navigation Arrow */}
+                <button
+                  type="button"
+                  onClick={prevSlide}
+                  aria-label="Previous product image"
+                  className="absolute left-1 sm:left-3 top-1/2 -translate-y-1/2 z-20 flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-full border border-gold-light/25 bg-pine-950/80 text-cream backdrop-blur-md shadow-lg transition-all hover:bg-gold hover:text-pine-950 hover:scale-110 active:scale-95"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
+
+                {/* Right Navigation Arrow */}
+                <button
+                  type="button"
+                  onClick={nextSlide}
+                  aria-label="Next product image"
+                  className="absolute right-1 sm:right-3 top-1/2 -translate-y-1/2 z-20 flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-full border border-gold-light/25 bg-pine-950/80 text-cream backdrop-blur-md shadow-lg transition-all hover:bg-gold hover:text-pine-950 hover:scale-110 active:scale-95"
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Subtitle Caption */}
+              <p className="mt-1 text-center text-xs text-cream/70 sm:text-sm font-medium tracking-wide">
+                {currentSlideData.subtitle}
+              </p>
+
+              {/* Pack Size Thumbnail / Selector Pills */}
+              <div className="mt-4 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 pt-2 border-t border-gold-light/10">
+                {slides.map((s, idx) => (
+                  <button
+                    key={s.tag}
+                    type="button"
+                    onClick={() => setActiveSlide(idx)}
+                    className={`group relative flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs transition-all ${
+                      idx === activeSlide
+                        ? "bg-gold text-pine-950 font-bold shadow-md shadow-gold/20 scale-105"
+                        : "bg-pine-900/60 text-cream/70 hover:text-cream hover:bg-pine-900 border border-gold-light/15"
+                    }`}
+                  >
+                    <span>{s.tag}</span>
+                  </button>
+                ))}
               </div>
 
               {/* Slide Counter Dots */}

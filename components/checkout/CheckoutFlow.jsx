@@ -617,10 +617,7 @@ export default function CheckoutFlow() {
                 <Lock className="h-3.5 w-3.5 text-gold-deep flex-shrink-0" />
                 <span>256-Bit SSL Encrypted Checkout</span>
               </div>
-              <div className="flex items-center gap-2 pt-1.5">
-                <Package className="h-3.5 w-3.5 text-gold-deep flex-shrink-0" />
-                <span>Wood-churned, fresh Alwar dispatch</span>
-              </div>
+             
               <div className="flex items-center gap-2 pt-1.5">
                 <Truck className="h-3.5 w-3.5 text-emerald-600 flex-shrink-0" />
                 <span>Express courier delivery across India</span>
@@ -1114,7 +1111,7 @@ export default function CheckoutFlow() {
             <div className="rounded-3xl border border-gold/30 bg-gradient-to-b from-white via-cream-paper/85 to-cream-paper p-6 sm:p-7 shadow-sm space-y-5">
               <div className="border-b border-ink/8 pb-4">
                 <h3 className="font-display text-lg font-bold text-pine-950">
-                  Server Order Summary
+                 Order Summary
                 </h3>
                 <p className="text-xs text-ink/60">
                   Values verified directly via <code className="text-[10px] bg-ink/5 px-1 py-0.5 rounded">GET /api/v1/cart</code>
@@ -1174,10 +1171,7 @@ export default function CheckoutFlow() {
                   <ShieldCheck className="h-4 w-4 text-emerald-600 flex-shrink-0" />
                   <span>100% Secure Checkout via 256-bit Encryption</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Package className="h-4 w-4 text-gold-deep flex-shrink-0" />
-                  <span>Fresh wood-churned cold press directly from Alwar, Rajasthan</span>
-                </div>
+              
               </div>
             </div>
           </div>

@@ -40,7 +40,9 @@ export function CartProvider({ children }) {
       const raw = localStorage.getItem(GUEST_CART_KEY);
       if (raw) {
         const parsed = JSON.parse(raw);
-        return normalizeCart(parsed);
+        const normalized = normalizeCart(parsed);
+        // Recalculate legacy local carts without their former hardcoded shipping estimates.
+        return recalculateGuestCart(normalized.items, normalized.coupon);
       }
     } catch (_) {}
     return createEmptyCart();
@@ -360,11 +362,12 @@ function createEmptyCart() {
     coupon: null,
     subtotalPaise: 0,
     discountPaise: 0,
-    shippingPaise: 0,
+    shippingPaise: null,
     gstIncludedPaise: 0,
     totalPaise: 0,
     total: 0,
-    freeShippingRemainingPaise: 100000, // ₹1,000 threshold for free shipping
+    freeShippingRemainingPaise: null,
+    freeShippingThresholdPaise: null,
     issues: [],
     canCheckout: false,
   };
@@ -386,9 +389,19 @@ function normalizeCart(data) {
   const subtotalPaise =
     c.subtotalPaise ?? items.reduce((acc, curr) => acc + (curr.unitPricePaise || 0) * (curr.quantity || 1), 0);
   const discountPaise = c.discountPaise || 0;
-  const shippingPaise = c.shippingPaise || 0;
-  const totalPaise = c.totalPaise || Math.max(0, subtotalPaise - discountPaise + shippingPaise);
-  const total = c.total || totalPaise / 100;
+  const shippingPaise = Number.isInteger(c.shippingPaise) ? c.shippingPaise : null;
+  const totalPaise = Number.isInteger(c.totalPaise)
+    ? c.totalPaise
+    : Math.max(0, subtotalPaise - discountPaise + (shippingPaise ?? 0));
+  const total = Number.isFinite(c.total) ? c.total : totalPaise / 100;
+  const freeShippingRemainingPaise = Number.isInteger(c.freeShippingRemainingPaise)
+    ? c.freeShippingRemainingPaise
+    : null;
+  const freeShippingThresholdPaise = Number.isInteger(c.freeShippingThresholdPaise)
+    ? c.freeShippingThresholdPaise
+    : freeShippingRemainingPaise == null
+      ? null
+      : subtotalPaise + freeShippingRemainingPaise;
 
   return {
     ...c,
@@ -399,7 +412,8 @@ function normalizeCart(data) {
     shippingPaise,
     totalPaise,
     total,
-    freeShippingRemainingPaise: c.freeShippingRemainingPaise ?? Math.max(0, 100000 - subtotalPaise),
+    freeShippingRemainingPaise,
+    freeShippingThresholdPaise,
     canCheckout: items.length > 0 && (c.canCheckout !== false),
   };
 }
@@ -411,11 +425,9 @@ function recalculateGuestCart(items, coupon = null) {
     0
   );
 
-  const FREE_SHIPPING_THRESHOLD = 100000; // ₹1,000
-  const STANDARD_SHIPPING = 6000; // ₹60
-
-  const shippingPaise = subtotalPaise >= FREE_SHIPPING_THRESHOLD || subtotalPaise === 0 ? 0 : STANDARD_SHIPPING;
-  const freeShippingRemainingPaise = Math.max(0, FREE_SHIPPING_THRESHOLD - subtotalPaise);
+  // Guest carts have no delivery address, so the server cannot quote shipping yet.
+  const shippingPaise = null;
+  const freeShippingRemainingPaise = null;
 
   let discountPaise = 0;
   if (coupon && coupon.discountPaise) {
@@ -424,7 +436,7 @@ function recalculateGuestCart(items, coupon = null) {
 
   const taxablePaise = Math.max(0, subtotalPaise - discountPaise);
   const gstIncludedPaise = Math.round(taxablePaise * 0.05); // 5% GST included
-  const totalPaise = taxablePaise + shippingPaise;
+  const totalPaise = taxablePaise;
 
   return {
     items,
@@ -437,6 +449,7 @@ function recalculateGuestCart(items, coupon = null) {
     totalPaise,
     total: totalPaise / 100,
     freeShippingRemainingPaise,
+    freeShippingThresholdPaise: null,
     issues: [],
     canCheckout: items.length > 0,
   };

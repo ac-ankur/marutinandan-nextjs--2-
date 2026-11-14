@@ -28,7 +28,6 @@ import {
 } from "lucide-react";
 
 import OverviewTab from "./OverviewTab";
-import PricingModeSwitch from "@/components/PricingModeSwitch";
 import ProductsTab from "./ProductsTab";
 import InventoryTab from "./InventoryTab";
 import OrdersTab from "./OrdersTab";
@@ -214,11 +213,6 @@ export default function AdminConsole() {
                   ))}
                 </div>
               )}
-            </div>
-
-            {/* Pricing Mode Switch (Static vs Live API) */}
-            <div className="hidden md:flex items-center">
-              <PricingModeSwitch compact={true} />
             </div>
 
             {/* View public storefront */}

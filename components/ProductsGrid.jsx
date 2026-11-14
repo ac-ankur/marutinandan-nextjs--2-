@@ -9,7 +9,7 @@ import { getAllProducts } from "@/data/products";
 import { usePricingMode } from "@/context/PricingModeContext";
 import { useCart } from "@/context/CartContext";
 import { shop, formatApiError } from "@/lib/api";
-import { Search, Sparkles, RefreshCw, ShoppingBag, ArrowUpDown, Check, Loader2 } from "lucide-react";
+import { Search, RefreshCw, ShoppingBag, ArrowUpDown, Check, Loader2 } from "lucide-react";
 
 /* ── Shared micro-button used inside every product card ── */
 function CardAddButton({ onClick, loading, done, disabled }) {
@@ -47,7 +47,7 @@ function CardAddButton({ onClick, loading, done, disabled }) {
 }
 
 export default function ProductsGrid({ initialVariant = "all" }) {
-  const { isDynamic, setPricingMode } = usePricingMode();
+  const { isDynamic } = usePricingMode();
   const [filter, setFilter] = useState(initialVariant);
   const gridRef = useRef(null);
 
@@ -194,32 +194,18 @@ export default function ProductsGrid({ initialVariant = "all" }) {
           {loading ? (
             <div className="col-span-2 py-16 text-center text-sm text-ink/50">
               <RefreshCw className="mx-auto h-6 w-6 animate-spin text-gold-deep mb-2" />
-              Fetching live products from API…
+              Fetching  products...
             </div>
           ) : error ? (
             <div className="col-span-2 rounded-2xl border border-rose-200 bg-rose-50/70 p-6 text-center text-rose-800">
               <p className="font-semibold text-sm">Failed to load dynamic API products</p>
               <p className="mt-1 text-xs text-rose-600">{error}</p>
-              <button
-                type="button"
-                onClick={() => setPricingMode("static")}
-                className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-pine-800 px-5 py-2 text-xs font-semibold text-cream hover:bg-pine-900 shadow-sm"
-              >
-                Switch to Static Catalog
-              </button>
             </div>
           ) : dynamicProducts.length === 0 ? (
             <div className="col-span-2 rounded-2xl border border-dashed border-ink/15 bg-cream-paper p-12 text-center text-ink/60">
               <ShoppingBag className="mx-auto h-8 w-8 text-ink/30 mb-2" />
               <p className="font-semibold text-pine-900 text-sm">No products found in live API</p>
               <p className="mt-1 text-xs text-ink/50">No catalog products match your search or category criteria.</p>
-              <button
-                type="button"
-                onClick={() => setPricingMode("static")}
-                className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-pine-800 px-5 py-2 text-xs font-semibold text-cream hover:bg-pine-900 shadow-sm"
-              >
-                View Static Catalog
-              </button>
             </div>
           ) : (
             dynamicProducts.map((p) => (
@@ -340,12 +326,6 @@ function DynamicProductCard({ product }) {
 
   return (
     <div className="product-card group/card relative flex flex-col overflow-hidden rounded-[28px] border border-ink/10 bg-cream-paper p-7 shadow-[0_1px_2px_rgba(20,30,20,0.04)] transition-shadow duration-300 hover:shadow-[0_18px_40px_-24px_rgba(20,40,25,0.35)]">
-      {/* Dynamic API Badge */}
-      <div className="absolute right-6 top-6 z-20 flex items-center gap-1 rounded-full bg-amber-500/10 border border-amber-500/30 px-2.5 py-0.5 text-[10px] font-bold text-amber-700">
-        <Sparkles className="h-2.5 w-2.5 text-amber-600" />
-        <span>Live API</span>
-      </div>
-
       <div className="relative flex h-56 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-b from-white to-cream-paper">
         <div className="relative h-48 w-64">
           <SafeImage
@@ -416,7 +396,7 @@ function DynamicProductCard({ product }) {
 
         {/* Price, Link & Add to Bag */}
         <div className="mt-6 border-t border-ink/10 pt-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <div className="flex items-baseline gap-2">
                 <span className="font-display text-2xl text-gold-deep">₹{activePrice}</span>
@@ -430,6 +410,14 @@ function DynamicProductCard({ product }) {
                 </span>
               )}
             </div>
+            <CardAddButton
+              onClick={handleAdd}
+              loading={addState === "loading"}
+              done={addState === "done"}
+              disabled={!isInStock}
+            />
+          </div>
+          <div className="mt-3 flex justify-end">
             <Link
               href={`/products/${product.slug}`}
               className="text-xs font-semibold text-pine-800 underline decoration-gold decoration-2 underline-offset-4 hover:text-gold-deep transition-colors"
@@ -437,12 +425,6 @@ function DynamicProductCard({ product }) {
               View details →
             </Link>
           </div>
-          <CardAddButton
-            onClick={handleAdd}
-            loading={addState === "loading"}
-            done={addState === "done"}
-            disabled={!isInStock}
-          />
         </div>
       </div>
     </div>

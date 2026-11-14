@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import SafeImage from "@/components/SafeImage";
+import Image from "next/image";
 
 export default function HorizontalGallery({ items }) {
   const [activeHover, setActiveHover] = useState(null);
@@ -14,6 +14,44 @@ export default function HorizontalGallery({ items }) {
 
   const cardRefs = useRef([]);
   const imageRefs = useRef([]); // NEW: refs scoped to just the image wrapper
+  const galleryTrackRef = useRef(null);
+  const edgeScrollDirectionRef = useRef(0);
+  const edgeScrollFrameRef = useRef(null);
+
+  // Let desktop users scroll the gallery by hovering near either edge.
+  const scrollAtEdge = () => {
+    const track = galleryTrackRef.current;
+    const direction = edgeScrollDirectionRef.current;
+
+    if (track && direction) {
+      track.scrollLeft += direction * 12;
+      edgeScrollFrameRef.current = window.requestAnimationFrame(scrollAtEdge);
+    } else {
+      edgeScrollFrameRef.current = null;
+    }
+  };
+
+  const handleGalleryMouseMove = (event) => {
+    const track = galleryTrackRef.current;
+    if (!track) return;
+
+    const { left, width } = track.getBoundingClientRect();
+    const relativeX = (event.clientX - left) / width;
+    const edgeSize = 0.2;
+
+    edgeScrollDirectionRef.current = relativeX < edgeSize ? -1 : relativeX > 1 - edgeSize ? 1 : 0;
+    if (edgeScrollDirectionRef.current && !edgeScrollFrameRef.current) {
+      edgeScrollFrameRef.current = window.requestAnimationFrame(scrollAtEdge);
+    }
+  };
+
+  const stopEdgeScroll = () => {
+    edgeScrollDirectionRef.current = 0;
+    if (edgeScrollFrameRef.current) {
+      window.cancelAnimationFrame(edgeScrollFrameRef.current);
+      edgeScrollFrameRef.current = null;
+    }
+  };
 
   // IntersectionObserver to handle the 3D focus animation on mobile scroll
   useEffect(() => {
@@ -93,7 +131,12 @@ export default function HorizontalGallery({ items }) {
         </div>
       </div>
 
-      <div className="flex w-full gap-6 overflow-x-auto snap-x snap-mandatory py-12 px-6 lg:px-10 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+      <div
+        ref={galleryTrackRef}
+        onMouseMove={handleGalleryMouseMove}
+        onMouseLeave={stopEdgeScroll}
+        className="gallery-scroll flex w-full gap-6 overflow-x-auto snap-x snap-mandatory py-12 px-6 lg:px-10"
+      >
         {items.map((item, index) => {
           const isHovered = activeHover === index;
           const isFocusedMobile = activeFocusedIndex === index;
@@ -136,10 +179,9 @@ export default function HorizontalGallery({ items }) {
                       : "scale-95 opacity-85 sm:scale-100 sm:opacity-100"
                   } ${isHovered ? "sm:scale-105 sm:-translate-y-2" : ""}`}
                 >
-                  <SafeImage
+                  <Image
                     src={item.image}
                     alt={`${item.variantData.name} - ${item.size}`}
-                    fallbackHint={`${item.variantData.name} - ${item.size}`}
                     fill
                     className="object-contain object-center drop-shadow-xl"
                     sizes="(max-width: 768px) 300px, 340px"

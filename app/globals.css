@@ -95,6 +95,15 @@ video {
     min-width: 20rem;
   }
 
+  .gallery-scroll {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .gallery-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
   .cart-drawer-scroll {
     scrollbar-width: thin;
     scrollbar-color: rgba(184, 134, 11, 0.45) transparent;

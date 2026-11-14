@@ -3,11 +3,9 @@
 import { useEffect, useState, useCallback } from "react";
 import { usePricingMode } from "@/context/PricingModeContext";
 import { useCart } from "@/context/CartContext";
-import PricingModeSwitch from "@/components/PricingModeSwitch";
 import { shop, wishlist as wishlistApi, formatApiError } from "@/lib/api";
 import { useProductVariant } from "@/context/ProductVariantContext";
 import { ShoppingBag, Check, Loader2, AlertTriangle, Heart, Shield, RotateCcw, BadgeCheck } from "lucide-react";
-import Link from "next/link";
 
 /* ------------------------------------------------------------------
    Add to Cart button with idle / loading / done states
@@ -107,7 +105,7 @@ function WishlistButton({ productId, productName, productMeta }) {
 /* ------------------------------------------------------------------
    Main Buy Panel
    ------------------------------------------------------------------ */
-export default function ProductPricingSection({ product, otherSizes = [] }) {
+export default function ProductPricingSection({ product }) {
   const { isDynamic } = usePricingMode();
   const { addItem } = useCart();
   const productVariantContext = useProductVariant();
@@ -132,17 +130,10 @@ export default function ProductPricingSection({ product, otherSizes = [] }) {
             setDynamicProduct(p);
             setSelectedVariant(p.variants[0]);
           } else {
-            shop.products({ page: 1, pageSize: 5 }).then((catalog) => {
-              if (!active) return;
-              const first = catalog?.items?.[0];
-              if (first?.variants?.length) {
-                setDynamicProduct(first);
-                setSelectedVariant(first.variants[0]);
-              }
-            });
+            setApiError("This product has no live variants available.");
           }
         })
-        .catch(() => { if (active) setApiError("Live pricing unavailable - showing catalogue price"); })
+        .catch((err) => { if (active) setApiError(formatApiError(err)); })
         .finally(() => { if (active) setLoading(false); });
     }
     return () => { active = false; };
@@ -157,15 +148,11 @@ export default function ProductPricingSection({ product, otherSizes = [] }) {
     });
   }, [dynamicProduct, selectedVariant, isDynamic]);
 
-  const activePrice = selectedVariant
-    ? selectedVariant.price ?? (selectedVariant.pricePaise / 100)
-    : product.mrp;
-  const activeMrp = selectedVariant
-    ? selectedVariant.mrp ?? (selectedVariant.mrpPaise / 100)
-    : product.mrp;
-  const hasDiscount = isDynamic && activeMrp > activePrice;
+  const activePrice = selectedVariant?.price ?? (selectedVariant?.pricePaise != null ? selectedVariant.pricePaise / 100 : null);
+  const activeMrp = selectedVariant?.mrp ?? (selectedVariant?.mrpPaise != null ? selectedVariant.mrpPaise / 100 : activePrice);
+  const hasDiscount = activeMrp != null && activePrice != null && activeMrp > activePrice;
   const discountPct = hasDiscount ? Math.round(((activeMrp - activePrice) / activeMrp) * 100) : 0;
-  const isInStock = !isDynamic || selectedVariant?.inStock !== false;
+  const isInStock = selectedVariant?.inStock !== false && Boolean(selectedVariant?.id);
   const isAddLoading = addState === "loading";
   const isAddDone = addState === "done";
 
@@ -191,35 +178,13 @@ export default function ProductPricingSection({ product, otherSizes = [] }) {
     }
   }, [selectedVariant, dynamicProduct, product, addItem, activePrice, activeMrp]);
 
-  const handleAddStatic = useCallback(async () => {
-    const guestVariantId = product.skuBase || product.slug;
-    setAddState("loading"); setAddError("");
-    try {
-      await addItem(guestVariantId, 1, {
-        productName: product.variantData?.name || "Cold Pressed Mustard Oil",
-        productSlug: product.slug,
-        variantLabel: `${product.size} ${product.stockUnit}`,
-        sku: product.skuBase,
-        image: product.image,
-        pricePaise: product.mrp * 100,
-        mrpPaise: product.mrp * 100,
-      });
-      setAddState("done");
-      setTimeout(() => setAddState("idle"), 2500);
-    } catch (err) {
-      setAddState("error");
-      setAddError(formatApiError(err) || "Could not add to bag.");
-      setTimeout(() => setAddState("idle"), 3500);
-    }
-  }, [product, addItem]);
-
   return (
     <div className="space-y-5">
       {/* Price block */}
       <div>
         <div className="flex flex-wrap items-baseline gap-3">
           <span className="font-display text-4xl font-bold text-pine-900">
-            Rs.{activePrice}
+            {activePrice == null ? (loading ? "Loading…" : "Unavailable") : `Rs.${activePrice}`}
           </span>
           {hasDiscount && (
             <>
@@ -230,17 +195,7 @@ export default function ProductPricingSection({ product, otherSizes = [] }) {
             </>
           )}
         </div>
-        <p className="mt-1 text-xs text-ink/50">
-          {isDynamic ? "Incl. GST - Live Backend Price" : "MRP - Inclusive of all taxes"}
-        </p>
-      </div>
-
-      {/* Mode indicator + toggle */}
-      <div className="flex items-center justify-between rounded-xl border border-ink/8 bg-cream-paper px-3 py-2">
-        <span className="text-xs text-ink/50">
-          {isDynamic ? "Live pricing active" : "Static catalogue"}
-        </span>
-        <PricingModeSwitch compact={true} />
+        <p className="mt-1 text-xs text-ink/50">Incl. GST · Live API price</p>
       </div>
 
       {/* Dynamic API variant selector */}
@@ -274,30 +229,6 @@ export default function ProductPricingSection({ product, otherSizes = [] }) {
       )}
 
       {/* Static size pills - same flavour, different sizes */}
-      {otherSizes.length > 0 && (
-        <div>
-          <p className="mb-2.5 text-xs font-semibold uppercase tracking-wider text-ink/50">
-            Select Pack Size
-          </p>
-          <div className="flex flex-wrap gap-2">
-            <span className="flex flex-col items-center rounded-2xl border-2 border-pine-800 bg-pine-800 px-4 py-2.5 text-xs font-medium text-cream shadow-md">
-              <span className="font-bold">{product.size}</span>
-              <span className="text-cream/80 text-[11px]">Rs.{product.mrp}</span>
-            </span>
-            {otherSizes.map((s) => (
-              <Link
-                key={s.slug}
-                href={`/products/${s.slug}`}
-                className="flex flex-col items-center rounded-2xl border-2 border-ink/15 bg-white px-4 py-2.5 text-xs font-medium text-ink/80 transition-all hover:border-pine-600 hover:text-pine-900"
-              >
-                <span className="font-bold">{s.size}</span>
-                <span className="text-pine-800 font-semibold text-[11px]">Rs.{s.mrp}</span>
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* Stock status */}
       {isDynamic && selectedVariant && (
         <div className="flex items-center gap-2 text-sm">
@@ -322,13 +253,13 @@ export default function ProductPricingSection({ product, otherSizes = [] }) {
       {/* ADD TO BAG + WISHLIST row */}
       <div className="flex gap-3">
         <AddToBagButton
-          onClick={isDynamic ? handleAddDynamic : handleAddStatic}
+          onClick={handleAddDynamic}
           loading={isAddLoading}
           done={isAddDone}
           disabled={!isInStock}
         />
         <WishlistButton
-          productId={isDynamic ? dynamicProduct?.id || product.slug : product.slug}
+          productId={dynamicProduct?.id || product.slug}
           productName={product.variantData?.name}
           productMeta={{
             slug: product.slug,

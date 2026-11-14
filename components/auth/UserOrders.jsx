@@ -580,9 +580,7 @@ export default function UserOrders() {
           <h3 className="mt-4 font-display text-lg font-semibold text-pine-950">
             No orders yet
           </h3>
-          <p className="mx-auto mt-1 max-w-sm text-xs text-ink/60">
-            Discover our cold-pressed, wood-churned mustard oils fresh from Rajasthan.
-          </p>
+         
           <Link
             href="/products"
             className="mt-5 inline-flex items-center gap-2 rounded-full bg-pine-900 px-5 py-2.5 text-xs font-semibold text-cream shadow-md transition-all hover:bg-pine-950 hover:shadow-lg"
