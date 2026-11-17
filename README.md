@@ -13,10 +13,26 @@ A rebuilt, animated Next.js version of the Marutinandan site.
 
 ```bash
 npm install
-npm run dev
+npm run dev:local
 ```
 
 Open http://localhost:3000.
+
+Choose the API environment when starting the development server:
+
+```bash
+npm run dev:local # reads .env.local
+npm run dev       # reads .env.development
+npm run dev:prod  # reads .env.production
+```
+
+Set `NEXT_PUBLIC_API_URL` in each file for its environment. Production builds
+and starts read `.env.production`:
+
+```bash
+npm run build
+npm start
+```
 
 Copy `.env.example` to `.env.local` and fill in values as needed:
 
