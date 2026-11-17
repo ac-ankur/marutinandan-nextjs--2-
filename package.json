@@ -6,8 +6,8 @@
     "dev:local": "env-cmd -f .env.local next dev",
     "dev": "env-cmd -f .env.development next dev",
     "dev:prod": "env-cmd -f .env.production next dev",
-    "build": "env-cmd -f .env.production next build",
-    "start": "env-cmd -f .env.production next start",
+    "build": "next build",
+    "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {

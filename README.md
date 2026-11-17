@@ -26,8 +26,10 @@ npm run dev       # reads .env.development
 npm run dev:prod  # reads .env.production
 ```
 
-Set `NEXT_PUBLIC_API_URL` in each file for its environment. Production builds
-and starts read `.env.production`:
+Set `NEXT_PUBLIC_API_URL` in each file for its environment. Next.js automatically
+loads `.env.production` for production builds and starts. On Vercel, configure
+production environment variables in the project settings because `.env.production`
+is not committed:
 
 ```bash
 npm run build
