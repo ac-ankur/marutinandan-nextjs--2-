@@ -880,12 +880,7 @@ function AddProductModal({ categories, onClose, onSuccess }) {
 
   return (
     <ModalPortal>
-      <div
-        className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm"
-        onClick={(e) => {
-          if (e.target === e.currentTarget) onClose();
-        }}
-      >
+      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
         <div
           data-lenis-prevent
           className="flex flex-col w-[94vw] lg:w-[84vw] max-w-[1440px] h-[85vh] rounded-2xl border border-slate-200 bg-white shadow-2xl overflow-hidden"
