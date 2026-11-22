@@ -1,58 +1,50 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { MapPin, Loader2, CheckCircle, XCircle, Truck } from "lucide-react";
-
-// Estimated delivery days by first 2 digits of pincode (rough zones)
-const DAYS_BY_PREFIX = {
-  "11": 2, "12": 2, "13": 2, "14": 2, "15": 2, "16": 2, "17": 3,
-  "18": 3, "19": 3, "20": 2, "21": 2, "22": 3, "23": 3, "24": 3,
-  "25": 3, "26": 3, "27": 3, "28": 3, "29": 4, "30": 3, "31": 3,
-  "32": 3, "33": 3, "34": 3, "35": 4, "36": 4, "37": 4, "38": 4,
-  "39": 4, "40": 3, "41": 3, "42": 3, "43": 3, "44": 4, "45": 4,
-  "46": 4, "47": 4, "48": 5, "49": 5, "50": 3, "51": 3, "52": 4,
-  "53": 4, "54": 4, "55": 4, "56": 4, "57": 4, "58": 5, "59": 5,
-  "60": 3, "61": 3, "62": 4, "63": 4, "64": 4, "65": 4, "66": 5,
-  "67": 5, "68": 5, "69": 5, "70": 3, "71": 3, "72": 3, "73": 3,
-  "74": 3, "75": 4, "76": 4, "77": 3, "78": 4, "79": 5, "80": 2,
-  "81": 3, "82": 3, "83": 4, "84": 3, "85": 4, "86": 4, "87": 5,
-  "88": 5, "89": 5, "90": 4, "91": 4, "92": 4, "93": 4, "94": 5,
-  "95": 5, "96": 5, "97": 5, "98": 6, "99": 6,
-};
-
-function getDeliveryDays(pin) {
-  const prefix = pin.slice(0, 2);
-  return DAYS_BY_PREFIX[prefix] || 5;
-}
-
-function addWorkingDays(n) {
-  const d = new Date();
-  let added = 0;
-  while (added < n) {
-    d.setDate(d.getDate() + 1);
-    if (d.getDay() !== 0) added++;
-  }
-  return d.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" });
-}
+import { useProductVariant } from "@/context/ProductVariantContext";
+import { formatApiError, shipping as shippingApi } from "@/lib/api";
 
 export default function PincodeChecker() {
+  const selectedVariant = useProductVariant()?.variant;
   const [pincode, setPincode] = useState("");
-  const [status, setStatus] = useState(null); // null | "loading" | "ok" | "no"
+  const [status, setStatus] = useState(null); // null | "loading" | "ok" | "no" | "error"
   const [result, setResult] = useState(null);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const check = () => {
+  useEffect(() => {
+    setStatus(null);
+    setResult(null);
+    setErrorMessage("");
+  }, [selectedVariant?.id]);
+
+  const check = async () => {
     if (!/^\d{6}$/.test(pincode)) return;
+    if (!selectedVariant?.id) {
+      setStatus("error");
+      setErrorMessage("Delivery checking is temporarily unavailable for this product.");
+      return;
+    }
     setStatus("loading");
-    setTimeout(() => {
-      if (pincode[0] === "0") {
-        setStatus("no");
-        setResult(null);
-      } else {
-        const days = getDeliveryDays(pincode);
+    setResult(null);
+    setErrorMessage("");
+    try {
+      const response = await shippingApi.serviceability(pincode, selectedVariant.id, 1);
+      const data = response?.serviceability ?? response;
+      if (data?.serviceable) {
+        setResult(data);
         setStatus("ok");
-        setResult({ days, date: addWorkingDays(days) });
+      } else {
+        setStatus("no");
       }
-    }, 700);
+    } catch (error) {
+      if (error?.code === "PINCODE_NOT_SERVICEABLE") {
+        setStatus("no");
+      } else {
+        setErrorMessage(formatApiError(error));
+        setStatus("error");
+      }
+    }
   };
 
   return (
@@ -71,7 +63,7 @@ export default function PincodeChecker() {
           onChange={(e) => {
             const v = e.target.value.replace(/\D/g, "").slice(0, 6);
             setPincode(v);
-            if (status) { setStatus(null); setResult(null); }
+            if (status) { setStatus(null); setResult(null); setErrorMessage(""); }
           }}
           onKeyDown={(e) => e.key === "Enter" && check()}
           placeholder="Enter 6-digit pincode"
@@ -80,7 +72,7 @@ export default function PincodeChecker() {
         <button
           type="button"
           onClick={check}
-          disabled={pincode.length !== 6 || status === "loading"}
+          disabled={pincode.length !== 6 || status === "loading" || !selectedVariant?.id}
           className="rounded-xl bg-pine-900 px-4 py-2.5 text-sm font-semibold text-cream transition-all hover:bg-pine-800 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {status === "loading"
@@ -95,12 +87,15 @@ export default function PincodeChecker() {
           <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-600" />
           <div className="text-sm">
             <p className="font-semibold text-emerald-800">Delivery Available!</p>
-            <p className="mt-0.5 text-emerald-700">
-              <Truck className="mr-1 inline h-3.5 w-3.5" />
-              Expected by <strong>{result.date}</strong>{" "}
-              <span className="text-emerald-600">({result.days} working days)</span>
-            </p>
-            <p className="mt-1 text-xs text-emerald-600">✦ Free shipping on orders above ₹499</p>
+            {(result.estimatedDelivery || result.estimatedDeliveryDays || result.courierName) && (
+              <p className="mt-0.5 text-emerald-700">
+                <Truck className="mr-1 inline h-3.5 w-3.5" />
+                {result.estimatedDelivery && <>Expected by <strong>{result.estimatedDelivery}</strong></>}
+                {result.estimatedDeliveryDays && <span className="text-emerald-600">{result.estimatedDelivery ? " · " : ""}{result.estimatedDeliveryDays} working days</span>}
+                {result.courierName && <span className="text-emerald-600">{result.estimatedDelivery || result.estimatedDeliveryDays ? " · " : ""}{result.courierName}</span>}
+              </p>
+            )}
+            <p className="mt-1 text-xs text-emerald-600">✦ Free shipping on orders of ₹5,000 or more</p>
           </div>
         </div>
       )}
@@ -112,6 +107,13 @@ export default function PincodeChecker() {
             <p className="font-semibold text-rose-700">Not serviceable yet</p>
             <p className="mt-0.5 text-xs text-rose-600">We&apos;re expanding! Try a nearby pincode or contact us.</p>
           </div>
+        </div>
+      )}
+
+      {status === "error" && (
+        <div className="mt-3 flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-2.5">
+          <XCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-600" />
+          <p className="text-sm text-amber-800">{errorMessage || "We couldn't check delivery right now. Please try again."}</p>
         </div>
       )}
     </div>

@@ -219,7 +219,7 @@ export default function LoginForm() {
         {/* Right Side: Sign In Form */}
         <div className="rounded-3xl border border-gold/25 bg-cream-paper p-7 sm:p-10 shadow-[0_25px_70px_-25px_rgba(21,56,38,0.25)] lg:col-span-7">
           <div className="mb-6">
-            <p className="text-xs font-semibold uppercase tracking-[0.25em] text-gold-deep">Member Access</p>
+
             <h1 className="mt-2 font-display text-3xl font-medium text-pine-950 sm:text-4xl">
               Welcome <span className="italic text-gold-deep">Back</span>
             </h1>
@@ -229,13 +229,13 @@ export default function LoginForm() {
           </div>
 
           {/* Continue with Google button */}
-          <div className="space-y-2">
+          {/* <div className="space-y-2">
             <button
               type="button"
               onClick={handleGoogleClick}
               className="group flex w-full items-center justify-center gap-3 rounded-full border border-ink/15 bg-white px-5 py-3 text-sm font-medium text-ink shadow-sm transition-all hover:border-gold hover:bg-cream hover:shadow-md"
             >
-              {/* Google colorful G logo */}
+             
               <svg className="h-4 w-4" viewBox="0 0 24 24">
                 <path
                   fill="#4285F4"
@@ -262,23 +262,23 @@ export default function LoginForm() {
                 {googleNotice}
               </p>
             )}
-          </div>
+          </div> */}
 
           {/* Divider */}
-          <div className="relative my-6 flex items-center justify-center">
+          {/* <div className="relative my-6 flex items-center justify-center">
             <div className="w-full border-t border-ink/10" />
             <span className="absolute bg-cream-paper px-3 text-xs uppercase tracking-wider text-ink/45">
               or sign in with email
             </span>
-          </div>
+          </div> */}
 
           {/* Server Error Alert */}
-          {serverError && (
+          {/* {serverError && (
             <div className="mb-5 flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 p-3.5 text-xs text-red-700">
               <AlertCircle className="h-4 w-4 flex-shrink-0 text-red-600 mt-0.5" />
               <span className="flex-1">{serverError}</span>
             </div>
-          )}
+          )} */}
 
           {/* Form */}
           <form onSubmit={handleLogin} noValidate className="space-y-4">

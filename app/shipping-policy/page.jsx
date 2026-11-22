@@ -81,7 +81,7 @@ export default function ShippingPolicyPage() {
               <Truck className="h-5 w-5 text-pine-900" />
             </div>
             <p className="mt-2 text-xs font-semibold text-pine-900 uppercase tracking-wider">Free Shipping</p>
-            <p className="text-xs text-ink/65 mt-0.5">On all orders above ₹5,000</p>
+            <p className="text-xs text-ink/65 mt-0.5">On orders of ₹5,000 or more</p>
           </div>
 
           <div className="rounded-2xl border border-ink/10 bg-white/70 p-4 text-center shadow-xs">
@@ -156,12 +156,12 @@ export default function ShippingPolicyPage() {
           <div className="rounded-2xl border border-ink/10 bg-white/70 p-5 sm:p-6 space-y-4 shadow-xs">
             <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-4">
               <p className="text-emerald-900 font-semibold text-sm">
-                🎉 Free Standard Shipping on all orders of ₹5,000 and above!
+                🎉 Free Standard Shipping on all orders of ₹5,000 or more!
               </p>
             </div>
             <BulletList
               items={[
-                "For cart orders under ₹5,000, shipping charges are calculated transparently based on total consignment weight, volumetric dimensions, and destination pin code tier.",
+                "For orders below ₹5,000, shipping charges are calculated transparently based on total consignment weight, volumetric dimensions, and destination pin code tier.",
                 "The exact shipping fee is computed and clearly displayed on the checkout page before you make any payment.",
                 "Zero Hidden Costs: There are no hidden handling, packaging, or fuel surcharge fees added at any point.",
               ]}

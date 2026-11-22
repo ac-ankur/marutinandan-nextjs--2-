@@ -89,8 +89,8 @@ export default function ProductDetailsAccordion({ product }) {
       <AccordionItem title="Shipping & Returns">
         <div className="space-y-3 text-sm text-ink/70">
           <p>
-            <strong className="text-pine-900">Free shipping</strong> on all orders above ₹499.
-            Orders below ₹499 have a flat ₹60 shipping fee.
+            <strong className="text-pine-900">Free shipping</strong> on orders of ₹5,000 or more.
+            Orders of ₹4,999 or less have shipping charges calculated at checkout.
           </p>
           <p>
             <strong className="text-pine-900">Delivery time:</strong> 2–6 working days depending on your location.
