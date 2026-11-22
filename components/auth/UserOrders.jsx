@@ -740,7 +740,7 @@ export default function UserOrders() {
                       </p>
                       {order.refundStatus && (
                         <span className="mt-1 inline-flex rounded-full border border-indigo-200 bg-indigo-50 px-2 py-1 text-[10px] font-semibold text-indigo-800">
-                          Refund {String(order.refundStatus).replaceAll("_", " ")}
+                          Refund Status: {String(order.refundStatus).replaceAll("_", " ")}
                         </span>
                       )}
                     </div>
@@ -888,7 +888,7 @@ export default function UserOrders() {
                               ))}
                             </ul>
                           )}
-                          {order.status === "CANCELLED" && <p className="mt-2 text-[11px] leading-5 text-ink/60">If a courier or AWB was already booked manually, cancel that shipment in the Shiprocket dashboard too.</p>}
+                          {/* {order.status === "CANCELLED" && <p className="mt-2 text-[11px] leading-5 text-ink/60">If a courier or AWB was already booked manually, cancel that shipment in the Shiprocket dashboard too.</p>} */}
                         </div>
                       )}
                     </div>
@@ -1345,67 +1345,83 @@ export default function UserOrders() {
       {/* ========================================================================= */}
       {/* CANCEL ORDER MODAL (POST /orders/:orderNumber/cancel) */}
       {/* ========================================================================= */}
-      {cancelModalOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-3 backdrop-blur-xs sm:p-6">
-          <div className="max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-3xl border border-gold/30 bg-cream-paper p-5 shadow-2xl sm:p-8">
-            <div className="mb-4 flex items-start gap-3 text-rose-900">
+      {cancelModalOrder && typeof document !== "undefined" && createPortal(
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-3 backdrop-blur-sm sm:p-6"
+          onMouseDown={(event) => event.target === event.currentTarget && !cancelLoading && setCancelModalOrder(null)}
+        >
+          <section
+            data-lenis-prevent
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="cancel-order-title"
+            className="flex max-h-[min(90dvh,800px)] w-full max-w-xl flex-col overflow-hidden rounded-3xl border border-gold/30 bg-cream-paper shadow-2xl"
+          >
+            <header className="flex flex-shrink-0 items-start gap-3 border-b border-ink/10 px-5 py-4 sm:px-7">
               <span className="mt-0.5 rounded-full bg-rose-50 p-2">
                 <AlertCircle className="h-5 w-5 text-rose-600" />
               </span>
-              <h3 className="min-w-0 font-display text-xl font-bold leading-snug sm:text-2xl">
+              <h3 id="cancel-order-title" className="min-w-0 flex-1 pt-1 font-display text-xl font-bold leading-snug text-rose-900 sm:text-2xl">
                 Cancel Order #{cancelModalOrder.orderNumber || cancelModalOrder.id}
               </h3>
-            </div>
-            <p className="rounded-2xl bg-white/70 p-4 text-sm leading-relaxed text-ink/70">
-              Are you sure you want to cancel this order? Any reserved inventory will be released and
-              the cancellation request is irreversible.
-            </p>
-            {cancelModalOrder.shipments?.length > 0 && <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs leading-relaxed text-amber-900">The API will request cancellation of the Shiprocket order. If a courier or AWB was already booked manually, cancel that shipment in Shiprocket as well.</p>}
+              <button
+                type="button"
+                onClick={() => setCancelModalOrder(null)}
+                disabled={cancelLoading}
+                aria-label="Close cancellation dialog"
+                className="rounded-full p-2 text-ink/50 transition hover:bg-ink/5 hover:text-ink disabled:opacity-40"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </header>
 
-            <form onSubmit={handleCancelSubmit} className="mt-6 space-y-6">
-              {/* Preset Reason Chips */}
-              <div>
-                <label className="mb-3 block text-sm font-semibold text-pine-950">
-                  Select a reason for cancellation <span className="text-rose-500">*</span>
-                </label>
-                <div className="space-y-2">
-                  {CANCEL_PRESET_REASONS.map((r, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => setCancelReason(r)}
-                      className={`w-full rounded-xl border px-4 py-3 text-left text-sm leading-snug transition-all ${
-                        cancelReason === r
-                          ? "border-rose-400 bg-rose-50 text-rose-900 font-semibold shadow-sm"
-                          : "border-ink/10 bg-white text-ink/80 hover:border-gold/50 hover:bg-gold/5"
-                      }`}
-                    >
-                      {r}
-                    </button>
-                  ))}
+            <form onSubmit={handleCancelSubmit} className="flex min-h-0 flex-1 flex-col">
+              <div data-lenis-prevent className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-5 py-5 sm:px-7">
+               
+
+
+                <div>
+                  <label className="mb-3 block text-sm font-semibold text-pine-950">
+                    Select a reason for cancellation <span className="text-rose-500">*</span>
+                  </label>
+                  <div className="space-y-2">
+                    {CANCEL_PRESET_REASONS.map((r, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => setCancelReason(r)}
+                        aria-pressed={cancelReason === r}
+                        className={`w-full rounded-xl border px-4 py-3 text-left text-sm leading-snug transition-all ${
+                          cancelReason === r
+                            ? "border-rose-400 bg-rose-50 text-rose-900 font-semibold shadow-sm"
+                            : "border-ink/10 bg-white text-ink/80 hover:border-gold/50 hover:bg-gold/5"
+                        }`}
+                      >
+                        {r}
+                      </button>
+                    ))}
+                  </div>
                 </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-pine-950">
+                    Reason details
+                    <span className="ml-1 font-normal text-ink/50">(edit or add context)</span>
+                  </label>
+                  <textarea
+                    value={cancelReason}
+                    onChange={(e) => setCancelReason(e.target.value)}
+                    placeholder="Tell us what went wrong so we can improve…"
+                    rows={3}
+                    required
+                    className="w-full resize-y rounded-2xl border border-ink/15 bg-white p-4 text-sm leading-relaxed text-ink outline-none transition focus:border-pine-800 focus:ring-2 focus:ring-pine-800/10"
+                  />
+                </div>
+
+                {cancelError && <p className="text-xs font-medium text-rose-600">{cancelError}</p>}
               </div>
 
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-pine-950">
-                  Reason details
-                  <span className="ml-1 font-normal text-ink/50">(edit or add context)</span>
-                </label>
-                <textarea
-                  value={cancelReason}
-                  onChange={(e) => setCancelReason(e.target.value)}
-                  placeholder="Tell us what went wrong so we can improve…"
-                  rows={3}
-                  required
-                  className="w-full resize-y rounded-2xl border border-ink/15 bg-white p-4 text-sm leading-relaxed text-ink outline-none transition focus:border-pine-800 focus:ring-2 focus:ring-pine-800/10"
-                />
-              </div>
-
-              {cancelError && (
-                <p className="text-xs text-rose-600 font-medium">{cancelError}</p>
-              )}
-
-              <div className="flex flex-col-reverse gap-3 border-t border-ink/10 pt-5 sm:flex-row sm:justify-end">
+              <footer className="flex flex-shrink-0 flex-col-reverse gap-3 border-t border-ink/10 bg-white/40 px-5 py-4 sm:flex-row sm:justify-end sm:px-7">
                 <button
                   type="button"
                   onClick={() => setCancelModalOrder(null)}
@@ -1421,10 +1437,11 @@ export default function UserOrders() {
                 >
                   {cancelLoading ? "Cancelling…" : "Confirm Cancellation"}
                 </button>
-              </div>
+              </footer>
             </form>
-          </div>
-        </div>
+          </section>
+        </div>,
+        document.body
       )}
 
       {returnClaimOrder && (

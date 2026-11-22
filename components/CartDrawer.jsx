@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import SafeImage from "@/components/SafeImage";
+import SafeImage, { getStaticFallback } from "@/components/SafeImage";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
@@ -326,13 +326,8 @@ export default function CartDrawer() {
                 ? item.lineTotalPaise / 100
                 : unitPrice * item.quantity;
 
-              const isYellow =
-                item.productName?.toLowerCase().includes("yellow") ||
-                item.productSlug?.includes("yellow");
-              const defaultImage = isYellow
-                ? "/images/yellowmustard.png"
-                : "/images/blackmustard.png";
-              const imgSrc = item.image || defaultImage;
+              const imageHint = `${item.productName || item.productSlug || ""} ${item.variantLabel || ""} ${item.sku || ""}`;
+              const imgSrc = getStaticFallback(imageHint);
 
               return (
                 <div key={itemId} className="flex gap-4 py-4">
@@ -341,7 +336,7 @@ export default function CartDrawer() {
                     <SafeImage
                       src={imgSrc}
                       alt={item.productName || "Product"}
-                      fallbackHint={item.productName || item.productSlug || ""}
+                      fallbackHint={imageHint}
                       fill
                       className="object-contain p-1"
                       sizes="64px"

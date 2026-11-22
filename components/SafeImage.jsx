@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import NextImage from "next/image";
 
 /**
@@ -17,6 +17,7 @@ export function getStaticFallback(hint = "") {
 
   // Yellow mustard oil — match size if mentioned
   if (h.includes("yellow") || h.includes("peeli") || h.includes("pili") || h.includes("ymo")) {
+    if (h.includes("100ml") || h.includes("100 ml")) return "/images/1l_yellow_mustard_front.png";
     if (h.includes("15") || h.includes("15l") || h.includes("tin"))  return "/images/15l_yellow_mustard.png";
     if (h.includes("5l") || h.includes("5 l") || h.includes("jar") || h.includes("can"))  return "/images/5l_yellow_mustard_front.png";
     if (h.includes("1l") || h.includes("1 l") || h.includes("bottle"))  return "/images/1l_yellow_mustard_front.png";
@@ -24,6 +25,7 @@ export function getStaticFallback(hint = "") {
   }
 
   // Black mustard oil (default) — match size if mentioned
+  if (h.includes("100ml") || h.includes("100 ml")) return "/images/1l_black_mustard_front.png";
   if (h.includes("15") || h.includes("15l") || h.includes("tin"))  return "/images/15l_black_mustard.png";
   if (h.includes("5l") || h.includes("5 l") || h.includes("jar") || h.includes("can"))  return "/images/5l_black_mustard_front.png";
   if (h.includes("2l") || h.includes("2 l"))  return "/images/2l_black_mustard.png";
@@ -106,15 +108,25 @@ export default function SafeImage({
   const [hasError, setHasError] = useState(false);
   // Track loading state
   const [isLoading, setIsLoading] = useState(true);
+  const loadTimeoutRef = useRef(null);
 
   // Reset error and set loading on src change
   useEffect(() => {
     setHasError(false);
     setIsLoading(true);
+    clearTimeout(loadTimeoutRef.current);
+    if (isExternal(src)) {
+      loadTimeoutRef.current = setTimeout(() => {
+        setHasError(true);
+        setIsLoading(false);
+      }, 10000);
+    }
+    return () => clearTimeout(loadTimeoutRef.current);
   }, [src]);
 
   const handleLoad = useCallback(
     (e) => {
+      clearTimeout(loadTimeoutRef.current);
       setIsLoading(false);
       externalOnLoad?.(e);
     },
@@ -123,6 +135,7 @@ export default function SafeImage({
 
   const handleError = useCallback(
     (e) => {
+      clearTimeout(loadTimeoutRef.current);
       setIsLoading(false);
       if (!hasError) {
         setHasError(true);

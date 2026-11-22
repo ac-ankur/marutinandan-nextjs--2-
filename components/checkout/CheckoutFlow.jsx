@@ -456,7 +456,7 @@ export default function CheckoutFlow() {
     return (
       <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3">
         <Loader2 className="h-8 w-8 animate-spin text-gold-deep" />
-        <p className="font-display text-sm text-pine-900">Validating bag & server pricing…</p>
+        <p className="font-display text-sm text-pine-900">Validating bag…</p>
       </div>
     );
   }
@@ -1111,9 +1111,7 @@ export default function CheckoutFlow() {
                 <h3 className="font-display text-lg font-bold text-pine-950">
                  Order Summary
                 </h3>
-                <p className="text-xs text-ink/60">
-                  Values verified directly via <code className="text-[10px] bg-ink/5 px-1 py-0.5 rounded">GET /api/v1/cart</code>
-                </p>
+                
               </div>
 
               {/* Price Breakdown */}

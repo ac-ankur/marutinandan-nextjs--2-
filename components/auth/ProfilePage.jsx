@@ -223,12 +223,12 @@ export default function ProfilePage() {
           <div className="flex-1 min-w-0 w-full flex flex-col items-center sm:items-start">
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
               <h1 className="font-display text-2xl font-bold text-cream sm:text-3xl">{user.name}</h1>
-              <span
+              {/* <span
                 className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${badge.color}`}
               >
                 {badge.icon}
                 {badge.label}
-              </span>
+              </span> */}
             </div>
 
             <div className="mt-2 flex flex-col items-center sm:items-start gap-1 text-xs text-cream/70 sm:flex-row sm:items-center sm:gap-4">
