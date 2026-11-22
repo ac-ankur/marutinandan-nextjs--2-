@@ -265,7 +265,7 @@ export default function ProductPricingSection({ product }) {
             </>
           )}
         </div>
-        <p className="mt-1 text-xs text-ink/50">Incl. GST · Live API price</p>
+        <p className="mt-1 text-xs text-ink/50">Incl. GST .</p>
       </div>
 
       {/* Dynamic API variant selector */}

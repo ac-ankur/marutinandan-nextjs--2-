@@ -22,7 +22,9 @@ export default function ProductImageDisplay({ product }) {
 
   const productVariant = useProductVariant();
   const selectedVariant = productVariant?.variant;
-  const variantImages = Array.isArray(selectedVariant?.images)
+  // The API gallery can contain generic multi-pack marketing images. Product pages
+  // use the curated SKU photography so the selected product stays the focus.
+   const variantImages = Array.isArray(selectedVariant?.images)
     ? selectedVariant.images.filter((image) => image?.url)
     : [];
   const gallery = variantImages.length
@@ -31,7 +33,6 @@ export default function ProductImageDisplay({ product }) {
        ...(product.imageBack && product.imageBack !== product.image
          ? [{ url: product.imageBack, alt: `${product.variantData?.name || "Product"} - Back View` }]
          : [])];
-
   useEffect(() => {
     setActiveImageIndex(0);
     setShowBack(false);

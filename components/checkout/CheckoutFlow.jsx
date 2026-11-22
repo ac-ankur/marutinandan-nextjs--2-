@@ -645,9 +645,7 @@ export default function CheckoutFlow() {
                       <h2 className="font-display text-xl font-bold text-pine-950">
                         1. Verify Order Items
                       </h2>
-                      <p className="text-xs text-ink/60">
-                        Live server prices and warehouse inventory verified
-                      </p>
+                      
                     </div>
                   </div>
                   <span className="rounded-full bg-gold/15 px-3 py-1 text-xs font-bold text-gold-deep">

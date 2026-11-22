@@ -405,7 +405,7 @@ function DynamicProductCard({ product }) {
         {variants.length > 0 && (
           <div className="mt-4">
             <p className="text-[10px] font-medium uppercase tracking-[0.15em] text-ink/45">
-              Available sizes (Live Stock)
+              Available sizes
             </p>
             <div className="mt-2 flex flex-wrap gap-1.5">
               {variants.map((v) => {

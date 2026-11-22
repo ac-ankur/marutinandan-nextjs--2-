@@ -287,7 +287,7 @@ export default function OverviewTab({ onNavigateTab }) {
               <CircleDollarSign className="h-8 w-8 text-slate-400 mb-1.5" />
               <p className="text-xs font-semibold text-slate-700">No checkout transactions recorded</p>
               <p className="text-[11px] text-slate-500 mt-0.5 max-w-sm">
-                Live API is connected. Sales graphs will plot dynamically as consumers place orders in the store.
+                 Sales graphs will plot dynamically as consumers place orders in the store.
               </p>
             </div>
           ) : (
