@@ -287,13 +287,13 @@ export default function SignupForm() {
           </div>
 
           {/* Continue with Google button */}
-          <div className="space-y-2">
+          {/* <div className="space-y-2">
             <button
               type="button"
               onClick={handleGoogleClick}
               className="group flex w-full items-center justify-center gap-3 rounded-full border border-ink/15 bg-white px-5 py-3 text-sm font-medium text-ink shadow-sm transition-all hover:border-gold hover:bg-cream hover:shadow-md"
             >
-              {/* Google colorful G logo */}
+             
               <svg className="h-4 w-4" viewBox="0 0 24 24">
                 <path
                   fill="#4285F4"
@@ -320,23 +320,23 @@ export default function SignupForm() {
                 {googleNotice}
               </p>
             )}
-          </div>
+          </div> */}
 
           {/* Divider */}
-          <div className="relative my-6 flex items-center justify-center">
+          {/* <div className="relative my-6 flex items-center justify-center">
             <div className="w-full border-t border-ink/10" />
             <span className="absolute bg-cream-paper px-3 text-xs uppercase tracking-wider text-ink/45">
               or register with email
             </span>
-          </div>
+          </div> */}
 
           {/* Server Error Alert */}
-          {serverError && (
+          {/* {serverError && (
             <div className="mb-5 flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 p-3.5 text-xs text-red-700">
               <AlertCircle className="h-4 w-4 flex-shrink-0 text-red-600 mt-0.5" />
               <span className="flex-1">{serverError}</span>
             </div>
-          )}
+          )} */}
 
           {/* Form */}
           <form onSubmit={handleSignup} noValidate className="space-y-4">
