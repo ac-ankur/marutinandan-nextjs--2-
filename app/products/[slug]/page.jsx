@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getProductBySlug, products } from "@/data/products";
+import { getProductBySlug, products, getPackPackaging } from "@/data/products";
 import LabReportTable from "@/components/LabReportTable";
 import EnquiryForm from "@/components/EnquiryForm";
 import ProductSkuBadge from "@/components/ProductSkuBadge";
@@ -8,10 +8,13 @@ import ProductImageDisplay from "@/components/ProductImageDisplay";
 import ProductPricingSection from "@/components/ProductPricingSection";
 import ProductReviewsSection from "@/components/reviews/ProductReviewsSection";
 import ProductHeroRating from "@/components/reviews/ProductHeroRating";
+import ProductHeroTitle from "@/components/ProductHeroTitle";
 import PincodeChecker from "@/components/PincodeChecker";
 import ProductDetailsAccordion from "@/components/ProductDetailsAccordion";
 import ProductBenefitsPanel from "@/components/ProductBenefitsPanel";
 import { ProductVariantProvider } from "@/context/ProductVariantContext";
+
+export const dynamicParams = true;
 
 export function generateStaticParams() {
   return products.map((p) => ({ slug: p.slug }));
@@ -87,23 +90,11 @@ export default function ProductPage({ params }) {
             </div>
 
             <div className="flex flex-col gap-0">
-              <p className="text-xs uppercase tracking-[0.25em] text-gold-deep">
-                {product.variantData.tagline}
-              </p>
-              <h1 className="mt-3 font-display text-3xl font-bold text-pine-900 sm:text-4xl">
-                {product.variantData.name}
-              </h1>
-              <p className="mt-1 text-base text-ink/55">
-                {product.size} {product.stockUnit}
-              </p>
+              <ProductHeroTitle initialProduct={product} />
 
               <div className="mt-3">
                 <ProductHeroRating product={product} />
               </div>
-
-              <p className="mt-4 text-sm leading-relaxed text-ink/65">
-                {product.description}
-              </p>
 
               <div className="mt-6">
                 <ProductPricingSection product={product} otherSizes={otherSizes} />
@@ -131,7 +122,7 @@ export default function ProductPage({ params }) {
                 <ProductSkuBadge product={product} />
                 <div className="rounded-xl bg-cream-paper px-4 py-3">
                   <p className="text-[10px] uppercase tracking-[0.15em] text-ink/45">Pack</p>
-                  <p className="mt-1 text-sm font-medium text-pine-900">{product.size} {product.stockUnit}</p>
+                  <p className="mt-1 text-sm font-medium text-pine-900">{product.size} {getPackPackaging(product.size || product.stockUnit || product.slug)}</p>
                 </div>
                 <div className="rounded-xl bg-cream-paper px-4 py-3">
                   <p className="text-[10px] uppercase tracking-[0.15em] text-ink/45">Certification</p>

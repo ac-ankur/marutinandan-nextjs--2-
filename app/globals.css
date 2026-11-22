@@ -68,6 +68,49 @@ video {
   50% { transform: translateY(-14px); }
 }
 
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes oil-pulse {
+  0%, 100% {
+    transform: scale(1) translateY(0);
+    filter: drop-shadow(0 4px 10px rgba(211, 160, 46, 0.45));
+  }
+  50% {
+    transform: scale(1.09) translateY(-3px);
+    filter: drop-shadow(0 8px 18px rgba(211, 160, 46, 0.7));
+  }
+}
+
+@keyframes oil-ripple {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-oil-pulse {
+  animation: oil-pulse 2.2s ease-in-out infinite;
+}
+
+.animate-oil-ripple {
+  animation: oil-ripple 2.4s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+}
+
+.animate-oil-ripple-delayed {
+  animation: oil-ripple 2.4s cubic-bezier(0, 0.2, 0.8, 1) infinite 1.2s;
+}
+
 @keyframes scroll-loop {
   0% { transform: translateX(0); }
   100% { transform: translateX(-50%); }
@@ -240,6 +283,68 @@ video {
     transform: scale(1.4);
     opacity: 0;
   }
+}
+
+/* Custom Oil Droplet & Brand Loader Animations */
+@keyframes oil-pulse {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+    filter: drop-shadow(0 4px 8px rgba(217, 119, 6, 0.25));
+  }
+  50% {
+    transform: translateY(-4px) scale(1.06);
+    filter: drop-shadow(0 8px 14px rgba(217, 119, 6, 0.35));
+  }
+}
+
+@keyframes oil-ripple {
+  0% {
+    transform: scale(0.5);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1.7);
+    opacity: 0;
+  }
+}
+
+@keyframes oil-ripple-delayed {
+  0% {
+    transform: scale(0.35);
+    opacity: 0;
+  }
+  30% {
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}
+
+@keyframes oil-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-oil-pulse {
+  animation: oil-pulse 2s ease-in-out infinite;
+}
+
+.animate-oil-ripple {
+  animation: oil-ripple 2.2s cubic-bezier(0.2, 0.8, 0.4, 1) infinite;
+}
+
+.animate-oil-ripple-delayed {
+  animation: oil-ripple-delayed 2.2s cubic-bezier(0.2, 0.8, 0.4, 1) infinite 0.7s;
+}
+
+.animate-oil-shimmer {
+  animation: oil-shimmer 2.5s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {

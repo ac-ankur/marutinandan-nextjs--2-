@@ -102,7 +102,7 @@ const PACK_META = {
   },
   "2l": {
     label: "2 Litre",
-    unit: "Can",
+    unit: "Bottle",
     skuSize: "2L",
     suitability: "Best for: regular households, monthly stock-up, better value per litre.",
     images: {
@@ -214,7 +214,25 @@ export function getProductBySlug(slug) {
 
   // Fallback for dynamically created products from the API/Admin
   const isYellow = slug?.toLowerCase().includes("yellow");
+  const isGroundnut = slug?.toLowerCase().includes("peanut") || slug?.toLowerCase().includes("groundnut");
   const variantKey = isYellow ? "yellow" : "black";
+
+  let defaultName = "Cold Pressed Mustard Oil";
+  if (isYellow) defaultName = "Yellow Mustard Oil";
+  if (isGroundnut) defaultName = "Cold Pressed Peanut Oil";
+  if (slug && !isYellow && !isGroundnut && slug !== "cold-pressed-mustard-oil") {
+    defaultName = slug
+      .split("-")
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(" ");
+  }
+
+  const defaultImg = isGroundnut
+    ? "/images/yugika-gold-peanut-oil.png"
+    : isYellow
+    ? "/images/yellowmustard.png"
+    : "/images/blackmustard.png";
+
   return {
     slug,
     variant: variantKey,
@@ -226,9 +244,12 @@ export function getProductBySlug(slug) {
     mrp: 349,
     description: "100% Pure Cold Pressed Mustard Oil pressed from selected seeds with traditional aroma and pungency.",
     fullDescription: "Cold-pressed in small batches, unfiltered and nutrient-rich.",
-    image: isYellow ? "/images/yellowmustard.png" : "/images/blackmustard.png",
-    imageBack: isYellow ? "/images/yellowmustard.png" : "/images/blackmustard.png",
-    variantData: variants[variantKey],
+    image: defaultImg,
+    imageBack: defaultImg,
+    variantData: {
+      ...variants[variantKey],
+      name: defaultName,
+    },
     isDynamicOnly: true,
   };
 }
@@ -240,3 +261,32 @@ export function getAllProducts() {
 export function getSku(product, brand) {
   return `${brand.skuPrefix}-${product.skuBase}`;
 }
+
+/**
+ * Packaging unit resolver:
+ * - 1L, 2L, 500ml -> Bottle
+ * - 5L -> Can
+ * - 15L -> Tin
+ */
+export function getPackPackaging(hint = "") {
+  const str = String(hint).toLowerCase().replace(/[\s\-_]/g, "");
+  if (str.includes("15l") || str.includes("15litre") || str.includes("tin")) {
+    return "Tin";
+  }
+  if (str.includes("5l") || str.includes("5litre") || str.includes("can") || str.includes("jar")) {
+    return "Can";
+  }
+  if (
+    str.includes("2l") ||
+    str.includes("2litre") ||
+    str.includes("1l") ||
+    str.includes("1litre") ||
+    str.includes("500ml") ||
+    str.includes("bottle") ||
+    str.includes("pet")
+  ) {
+    return "Bottle";
+  }
+  return "Bottle";
+}
+

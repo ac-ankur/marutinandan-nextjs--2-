@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import SafeImage from "@/components/SafeImage";
@@ -34,6 +34,7 @@ import {
   Check,
   Star,
   Heart,
+  RotateCcw,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useWishlist } from "@/context/WishlistContext";
@@ -42,6 +43,7 @@ import AddressManager from "./AddressManager";
 import UserOrders from "./UserOrders";
 import UserReviews from "./UserReviews";
 import UserWishlist from "./UserWishlist";
+import UserReturns from "./UserReturns";
 
 export default function ProfilePage() {
   const { user, logout, refreshUser } = useAuth();
@@ -49,16 +51,31 @@ export default function ProfilePage() {
   const searchParams = useSearchParams();
   const { count: wishlistCount } = useWishlist();
 
-  // Active tab: "orders" | "wishlist" | "addresses" | "reviews" | "profile" | "admin"
+  // Active tab: "orders" | "returns" | "wishlist" | "addresses" | "profile" | "admin"
   const tabParam = searchParams?.get("tab");
   const [activeTab, setActiveTab] = useState(
-    tabParam && ["orders", "wishlist", "addresses", "reviews", "profile", "admin"].includes(tabParam)
-      ? tabParam
+    tabParam && ["orders", "returns", "wishlist", "addresses", "reviews", "profile", "admin"].includes(tabParam)
+      ? (tabParam === "reviews" ? "profile" : tabParam)
       : "orders"
   );
 
+  const handleTabChange = useCallback((newTab) => {
+    setActiveTab(newTab);
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.set("tab", newTab);
+      window.history.replaceState({}, "", url.toString());
+    } catch (_) {}
+  }, []);
+
   useEffect(() => {
-    if (tabParam && ["orders", "wishlist", "addresses", "reviews", "profile", "admin"].includes(tabParam)) {
+    if (tabParam === "reviews") {
+      setActiveTab("profile");
+      setTimeout(() => {
+        const el = document.getElementById("profile-reviews-section");
+        if (el) el.scrollIntoView({ behavior: "smooth" });
+      }, 200);
+    } else if (tabParam && ["orders", "returns", "wishlist", "addresses", "profile", "admin"].includes(tabParam)) {
       setActiveTab(tabParam);
     }
   }, [tabParam]);
@@ -177,30 +194,34 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-6">
-      {/* Profile Header Card */}
-      <div className="relative overflow-hidden rounded-3xl bg-pine-950 p-6 sm:p-8 text-cream shadow-xl">
+    <div className="mx-auto w-full max-w-5xl space-y-6 pb-24 md:pb-6">
+      {/* Profile Header Card (In mobile view, only visible when activeTab is "profile") */}
+      <div
+        className={`${
+          activeTab === "profile" ? "block" : "hidden md:block"
+        } relative overflow-hidden rounded-3xl bg-pine-950 p-6 sm:p-8 text-cream shadow-xl`}
+      >
         {/* Decorative blobs */}
         <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-gold/15 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-16 -left-16 h-56 w-56 rounded-full bg-pine-800/40 blur-3xl" />
 
-        <div className="relative z-10 flex flex-col gap-5 sm:flex-row sm:items-center sm:gap-6">
+        <div className="relative z-10 flex flex-col items-center text-center sm:flex-row sm:items-center sm:text-left sm:gap-6">
           {/* Avatar */}
-          <div className="flex-shrink-0">
+          <div className="flex-shrink-0 flex justify-center">
             {user.avatarUrl ? (
               <div className="relative h-20 w-20 overflow-hidden rounded-full border-2 border-gold/60 shadow-lg sm:h-24 sm:w-24">
                 <SafeImage src={user.avatarUrl} alt={user.name} fill className="object-cover" sizes="96px" />
               </div>
             ) : (
-              <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-gold/60 bg-pine-900 text-3xl font-display font-bold text-gold-light shadow-lg sm:h-24 sm:w-24 sm:text-4xl">
+              <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-gold/60 bg-pine-900 text-3xl font-display font-bold text-gold-light shadow-lg leading-none select-none sm:h-24 sm:w-24 sm:text-4xl">
                 {user.name?.charAt(0).toUpperCase() || "U"}
               </div>
             )}
           </div>
 
           {/* Name & Meta */}
-          <div className="flex-1 min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
+          <div className="flex-1 min-w-0 w-full flex flex-col items-center sm:items-start">
+            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
               <h1 className="font-display text-2xl font-bold text-cream sm:text-3xl">{user.name}</h1>
               <span
                 className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${badge.color}`}
@@ -210,7 +231,7 @@ export default function ProfilePage() {
               </span>
             </div>
 
-            <div className="mt-2 flex flex-col gap-1 text-xs text-cream/70 sm:flex-row sm:items-center sm:gap-4">
+            <div className="mt-2 flex flex-col items-center sm:items-start gap-1 text-xs text-cream/70 sm:flex-row sm:items-center sm:gap-4">
               <span className="flex items-center gap-1.5">
                 <Mail className="h-3.5 w-3.5 text-gold-light" />
                 {user.email}
@@ -228,7 +249,7 @@ export default function ProfilePage() {
             </div>
 
             {/* Status Badges Row */}
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div className="mt-3 flex flex-wrap justify-center sm:justify-start gap-2">
               {user.emailVerified ? (
                 <span className="inline-flex items-center gap-1 rounded-full bg-green-900/40 px-2.5 py-1 text-[10px] font-semibold text-green-300 border border-green-700/40">
                   <BadgeCheck className="h-3 w-3" /> Email Verified
@@ -256,9 +277,13 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Email Verification Warning */}
+      {/* Email Verification Warning (In mobile view, only visible when activeTab is "profile") */}
       {!user.emailVerified && (
-        <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 sm:p-5 shadow-sm">
+        <div
+          className={`${
+            activeTab === "profile" ? "flex" : "hidden md:flex"
+          } items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 sm:p-5 shadow-sm`}
+        >
           <AlertTriangle className="h-5 w-5 flex-shrink-0 text-amber-600 mt-0.5" />
           <div className="flex-1">
             <p className="text-sm font-semibold text-amber-900">Your email is not verified</p>
@@ -280,12 +305,12 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* Navigation Tabs (Orders, Delivery Addresses, Profile, and Admin if role is ADMIN) */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+      {/* Navigation Tabs (Desktop only: md:flex; on mobile view replaced by bottom app bar) */}
+      <div className="hidden md:flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
         <div className="inline-flex items-center gap-1.5 rounded-2xl border border-gold/25 bg-white/80 p-1.5 shadow-xs backdrop-blur-xs">
           <button
             type="button"
-            onClick={() => setActiveTab("orders")}
+            onClick={() => handleTabChange("orders")}
             className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all ${
               activeTab === "orders"
                 ? "bg-pine-900 text-cream shadow-sm"
@@ -298,7 +323,7 @@ export default function ProfilePage() {
 
           <button
             type="button"
-            onClick={() => setActiveTab("wishlist")}
+            onClick={() => handleTabChange("wishlist")}
             className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all ${
               activeTab === "wishlist"
                 ? "bg-pine-900 text-cream shadow-sm"
@@ -316,7 +341,18 @@ export default function ProfilePage() {
 
           <button
             type="button"
-            onClick={() => setActiveTab("addresses")}
+            onClick={() => handleTabChange("returns")}
+            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all ${
+              activeTab === "returns" ? "bg-pine-900 text-cream shadow-sm" : "text-ink/70 hover:bg-gold/15 hover:text-pine-950"
+            }`}
+          >
+            <RotateCcw className="h-3.5 w-3.5" />
+            <span>My Returns</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleTabChange("addresses")}
             className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all ${
               activeTab === "addresses"
                 ? "bg-pine-900 text-cream shadow-sm"
@@ -329,20 +365,7 @@ export default function ProfilePage() {
 
           <button
             type="button"
-            onClick={() => setActiveTab("reviews")}
-            className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all ${
-              activeTab === "reviews"
-                ? "bg-pine-900 text-cream shadow-sm"
-                : "text-ink/70 hover:bg-gold/15 hover:text-pine-950"
-            }`}
-          >
-            <Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400" />
-            <span>My Reviews</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab("profile")}
+            onClick={() => handleTabChange("profile")}
             className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all ${
               activeTab === "profile"
                 ? "bg-pine-900 text-cream shadow-sm"
@@ -350,13 +373,13 @@ export default function ProfilePage() {
             }`}
           >
             <UserRound className="h-3.5 w-3.5" />
-            <span>Profile & Security</span>
+            <span>Profile & Settings</span>
           </button>
 
           {isAdmin && (
             <button
               type="button"
-              onClick={() => setActiveTab("admin")}
+              onClick={() => handleTabChange("admin")}
               className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all ${
                 activeTab === "admin"
                   ? "bg-red-800 text-white shadow-sm"
@@ -373,15 +396,16 @@ export default function ProfilePage() {
       {/* TAB 0: My Orders */}
       {activeTab === "orders" && <UserOrders />}
 
+      {/* TAB: Return and damage claims */}
+      {activeTab === "returns" && <UserReturns />}
+
       {/* TAB: My Wishlist */}
       {activeTab === "wishlist" && <UserWishlist />}
 
-      {/* TAB: My Reviews */}
-      {activeTab === "reviews" && <UserReviews />}
-
-      {/* TAB 1: Profile & Security */}
-      {activeTab === "profile" && (
-        <div className="grid gap-6 lg:grid-cols-12 animate-fadeIn">
+      {/* TAB: Profile & Settings (includes My Reviews) */}
+      {(activeTab === "profile" || activeTab === "reviews") && (
+        <div className="space-y-8 animate-fadeIn">
+          <div className="grid gap-6 lg:grid-cols-12">
           {/* Left Column: Account Details (7 cols on lg) */}
           <div className="lg:col-span-7 flex flex-col gap-6">
             <div className="relative overflow-hidden rounded-3xl border border-gold/30 bg-gradient-to-b from-white via-cream-paper/85 to-cream-paper p-6 sm:p-8 shadow-sm">
@@ -489,9 +513,9 @@ export default function ProfilePage() {
                   <p className="font-semibold text-pine-950 text-sm">
                     {joinDate}
                   </p>
-                  <span className="mt-1 inline-block text-[10px] text-ink/50">
+                  {/* <span className="mt-1 inline-block text-[10px] text-ink/50">
                     Rajasthan Cold-Press Family
-                  </span>
+                  </span> */}
                 </div>
               </div>
 
@@ -685,7 +709,7 @@ export default function ProfilePage() {
               <div className="grid gap-2.5">
                 <button
                   type="button"
-                  onClick={() => setActiveTab("orders")}
+                  onClick={() => handleTabChange("orders")}
                   className="flex items-center justify-between rounded-2xl border border-ink/8 bg-white/80 p-3 text-left transition-all hover:border-gold/50 hover:bg-gold/5 hover:translate-x-0.5"
                 >
                   <div className="flex items-center gap-3">
@@ -702,7 +726,7 @@ export default function ProfilePage() {
 
                 <button
                   type="button"
-                  onClick={() => setActiveTab("addresses")}
+                  onClick={() => handleTabChange("addresses")}
                   className="flex items-center justify-between rounded-2xl border border-ink/8 bg-white/80 p-3 text-left transition-all hover:border-gold/50 hover:bg-gold/5 hover:translate-x-0.5"
                 >
                   <div className="flex items-center gap-3">
@@ -719,7 +743,12 @@ export default function ProfilePage() {
 
                 <button
                   type="button"
-                  onClick={() => setActiveTab("reviews")}
+                  onClick={() => {
+                    const el = document.getElementById("profile-reviews-section");
+                    if (el) {
+                      el.scrollIntoView({ behavior: "smooth" });
+                    }
+                  }}
                   className="flex items-center justify-between rounded-2xl border border-ink/8 bg-white/80 p-3 text-left transition-all hover:border-gold/50 hover:bg-gold/5 hover:translate-x-0.5"
                 >
                   <div className="flex items-center gap-3">
@@ -729,6 +758,23 @@ export default function ProfilePage() {
                     <div>
                       <p className="text-xs font-bold text-pine-950">My Reviews & Ratings</p>
                       <p className="text-[10px] text-ink/50">View & edit feedback for delivered oils</p>
+                    </div>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-ink/40" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleTabChange("returns")}
+                  className="flex items-center justify-between rounded-2xl border border-ink/8 bg-white/80 p-3 text-left transition-all hover:border-gold/50 hover:bg-gold/5 hover:translate-x-0.5"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-pine-900/10 text-pine-900">
+                      <RotateCcw className="h-4 w-4" />
+                    </span>
+                    <div>
+                      <p className="text-xs font-bold text-pine-950">Return & Replacement Claims</p>
+                      <p className="text-[10px] text-ink/50">Track replacement requests and refunds</p>
                     </div>
                   </div>
                   <ChevronRight className="h-4 w-4 text-ink/40" />
@@ -766,6 +812,31 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
+
+        {/* My Reviews & Ratings Section (Moved inside Profile & Settings) */}
+        <div
+          id="profile-reviews-section"
+          className="rounded-3xl border border-gold/30 bg-gradient-to-b from-white via-cream-paper/85 to-cream-paper p-6 sm:p-8 shadow-sm"
+        >
+          <div className="flex items-center justify-between border-b border-ink/8 pb-4 mb-6">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 shadow-xs">
+                <Star className="h-5 w-5 fill-amber-400 text-amber-500" />
+              </div>
+              <div>
+                <h2 className="font-display text-lg sm:text-xl font-bold text-pine-950">
+                  My Reviews & Ratings
+                </h2>
+                <p className="text-xs text-ink/60">
+                  Manage your verified feedback, ratings, and write reviews for delivered products
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <UserReviews />
+        </div>
+      </div>
       )}
 
       {/* TAB 2: Delivery Addresses (CRUD) */}
@@ -904,6 +975,139 @@ export default function ProfilePage() {
           </div>
         </div>
       )}
+
+      {/* Mobile App Bottom Navigation Bar (Fixed bottom tab bar for mobile view) */}
+      <nav
+        aria-label="Mobile account navigation"
+        className="fixed bottom-0 left-0 right-0 z-40 md:hidden border-t border-gold/25 bg-white/95 backdrop-blur-md shadow-[0_-4px_20px_rgba(0,0,0,0.06)] pt-1.5 pb-[max(0.6rem,env(safe-area-inset-bottom))] px-2"
+      >
+        <div className={`grid ${isAdmin ? "grid-cols-5" : "grid-cols-4"} items-center gap-1`}>
+          {/* 1. Orders */}
+          <button
+            type="button"
+            onClick={() => handleTabChange("orders")}
+            className={`flex flex-col items-center justify-center py-1 px-1 rounded-xl transition-all duration-150 active:scale-95 ${
+              activeTab === "orders"
+                ? "text-pine-950 font-bold"
+                : "text-ink/50 hover:text-pine-900 font-medium"
+            }`}
+          >
+            <div
+              className={`relative flex items-center justify-center h-7 w-12 rounded-full transition-colors ${
+                activeTab === "orders" ? "bg-pine-900/10 text-pine-950" : "text-ink/60"
+              }`}
+            >
+              <Package className={`h-5 w-5 ${activeTab === "orders" ? "stroke-[2.5]" : "stroke-[1.75]"}`} />
+            </div>
+            <span className="text-[10px] tracking-tight mt-0.5">Orders</span>
+          </button>
+
+          {/* 2. Wishlist */}
+          <button
+            type="button"
+            onClick={() => handleTabChange("wishlist")}
+            className={`flex flex-col items-center justify-center py-1 px-1 rounded-xl transition-all duration-150 active:scale-95 ${
+              activeTab === "wishlist"
+                ? "text-pine-950 font-bold"
+                : "text-ink/50 hover:text-pine-900 font-medium"
+            }`}
+          >
+            <div
+              className={`relative flex items-center justify-center h-7 w-12 rounded-full transition-colors ${
+                activeTab === "wishlist" ? "bg-pine-900/10 text-pine-950" : "text-ink/60"
+              }`}
+            >
+              <Heart
+                className={`h-5 w-5 ${
+                  activeTab === "wishlist"
+                    ? "fill-rose-500 text-rose-500 stroke-[2.2]"
+                    : wishlistCount > 0
+                    ? "fill-rose-400 text-rose-400 stroke-[1.75]"
+                    : "stroke-[1.75]"
+                }`}
+              />
+              {wishlistCount > 0 && (
+                <span className="absolute -top-1 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[9px] font-bold text-white shadow-xs">
+                  {wishlistCount}
+                </span>
+              )}
+            </div>
+            <span className="text-[10px] tracking-tight mt-0.5">Wishlist</span>
+          </button>
+
+          {/* 3. Addresses */}
+          <button
+            type="button"
+            onClick={() => handleTabChange("addresses")}
+            className={`flex flex-col items-center justify-center py-1 px-1 rounded-xl transition-all duration-150 active:scale-95 ${
+              activeTab === "addresses"
+                ? "text-pine-950 font-bold"
+                : "text-ink/50 hover:text-pine-900 font-medium"
+            }`}
+          >
+            <div
+              className={`relative flex items-center justify-center h-7 w-12 rounded-full transition-colors ${
+                activeTab === "addresses" ? "bg-pine-900/10 text-pine-950" : "text-ink/60"
+              }`}
+            >
+              <MapPin className={`h-5 w-5 ${activeTab === "addresses" ? "stroke-[2.5]" : "stroke-[1.75]"}`} />
+            </div>
+            <span className="text-[10px] tracking-tight mt-0.5">Addresses</span>
+          </button>
+
+          {/* 4. Profile & Settings (includes My Reviews) */}
+          <button
+            type="button"
+            onClick={() => handleTabChange("profile")}
+            className={`flex flex-col items-center justify-center py-1 px-1 rounded-xl transition-all duration-150 active:scale-95 ${
+              activeTab === "profile" || activeTab === "reviews"
+                ? "text-pine-950 font-bold"
+                : "text-ink/50 hover:text-pine-900 font-medium"
+            }`}
+          >
+            <div
+              className={`relative flex items-center justify-center h-7 w-12 rounded-full transition-colors ${
+                activeTab === "profile" || activeTab === "reviews"
+                  ? "bg-pine-900/10 text-pine-950"
+                  : "text-ink/60"
+              }`}
+            >
+              <UserRound
+                className={`h-5 w-5 ${
+                  activeTab === "profile" || activeTab === "reviews" ? "stroke-[2.5]" : "stroke-[1.75]"
+                }`}
+              />
+            </div>
+            <span className="text-[10px] tracking-tight mt-0.5">Profile</span>
+          </button>
+
+          {/* 5. Admin (Conditional) */}
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={() => handleTabChange("admin")}
+              className={`flex flex-col items-center justify-center py-1 px-1 rounded-xl transition-all duration-150 active:scale-95 ${
+                activeTab === "admin"
+                  ? "text-red-900 font-bold"
+                  : "text-ink/50 hover:text-red-900 font-medium"
+              }`}
+            >
+              <div
+                className={`relative flex items-center justify-center h-7 w-12 rounded-full transition-colors ${
+                  activeTab === "admin" ? "bg-red-100 text-red-900" : "text-ink/60"
+                }`}
+              >
+                <Shield
+                  className={`h-5 w-5 ${
+                    activeTab === "admin" ? "stroke-[2.5] text-red-700" : "stroke-[1.75]"
+                  }`}
+                />
+              </div>
+              <span className="text-[10px] tracking-tight mt-0.5">Admin</span>
+            </button>
+          )}
+        </div>
+      </nav>
     </div>
   );
 }

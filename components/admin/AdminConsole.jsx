@@ -25,6 +25,7 @@ import {
   Settings,
   Type,
   UserRound,
+  RotateCcw,
 } from "lucide-react";
 
 import OverviewTab from "./OverviewTab";
@@ -37,12 +38,14 @@ import OffersTab from "./OffersTab";
 import EnquiriesTab from "./EnquiriesTab";
 import ReviewsTab from "./ReviewsTab";
 import ShippingSettingsTab from "./ShippingSettingsTab";
+import ReturnsTab from "./ReturnsTab";
 
 const NAV_ITEMS = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
   { id: "products", label: "Products & Catalog", icon: Package },
   { id: "inventory", label: "Inventory & Stock", icon: Layers },
   { id: "orders", label: "Orders & Fulfillment", icon: ShoppingBag },
+  { id: "returns", label: "Returns & Claims", icon: RotateCcw },
   { id: "users", label: "Users & Customers", icon: Users },
   { id: "coupons", label: "Coupons & Discounts", icon: Tag },
   { id: "offers", label: "Promotional Offers", icon: Sparkles },
@@ -369,6 +372,7 @@ export default function AdminConsole() {
             {activeTab === "products" && <ProductsTab />}
             {activeTab === "inventory" && <InventoryTab />}
             {activeTab === "orders" && <OrdersTab initialFilter={orderFilter} />}
+            {activeTab === "returns" && <ReturnsTab />}
             {activeTab === "users" && <UsersTab />}
             {activeTab === "coupons" && <CouponsTab />}
             {activeTab === "offers" && <OffersTab />}

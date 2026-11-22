@@ -250,32 +250,27 @@ export default function ShippingPolicyPage() {
           </div>
         </section>
 
-        {/* ── Footer Navigation Buttons ── */}
-        <div className="border-t border-ink/10 pt-10 flex flex-wrap items-center justify-center gap-4 text-center">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 rounded-2xl bg-pine-900 px-6 py-3 text-sm font-semibold text-cream shadow-sm transition-all hover:bg-pine-800 hover:scale-[1.02] active:scale-[0.98]"
-          >
-            Back to Home
-          </Link>
-          <Link
-            href="/refund-policy"
-            className="inline-flex items-center gap-2 rounded-2xl border border-ink/15 bg-white px-6 py-3 text-sm font-semibold text-pine-900 shadow-sm transition-all hover:bg-cream hover:scale-[1.02] active:scale-[0.98]"
-          >
-            Refund &amp; Returns
-          </Link>
-          <Link
-            href="/terms-and-conditions"
-            className="inline-flex items-center gap-2 rounded-2xl border border-ink/15 bg-white px-6 py-3 text-sm font-semibold text-pine-900 shadow-sm transition-all hover:bg-cream hover:scale-[1.02] active:scale-[0.98]"
-          >
-            Terms &amp; Conditions
-          </Link>
-          <Link
-            href="/privacy-policy"
-            className="inline-flex items-center gap-2 rounded-2xl border border-ink/15 bg-white px-6 py-3 text-sm font-semibold text-pine-900 shadow-sm transition-all hover:bg-cream hover:scale-[1.02] active:scale-[0.98]"
-          >
-            Privacy Policy
-          </Link>
+        {/* ── Footer Navigation Links ── */}
+        <div className="border-t border-ink/10 pt-10 flex flex-col items-center gap-4 text-center">
+          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2 text-xs text-ink/65">
+            <Link href="/" className="font-semibold text-pine-900 hover:text-gold-deep transition-colors">
+              Home
+            </Link>
+            <span className="text-gold-deep/40 select-none">•</span>
+            <Link href="/terms-and-conditions" className="hover:text-pine-900 transition-colors">
+              Terms &amp; Conditions
+            </Link>
+            <span className="text-gold-deep/40 select-none">•</span>
+            <Link href="/privacy-policy" className="hover:text-pine-900 transition-colors">
+              Privacy Policy
+            </Link>
+            <span className="text-gold-deep/40 select-none">•</span>
+            <span className="font-bold text-pine-950">Shipping Policy</span>
+            <span className="text-gold-deep/40 select-none">•</span>
+            <Link href="/refund-policy" className="hover:text-pine-900 transition-colors">
+              Refund &amp; Cancellation
+            </Link>
+          </div>
         </div>
 
       </div>

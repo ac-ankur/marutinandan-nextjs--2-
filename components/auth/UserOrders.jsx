@@ -1,8 +1,11 @@
 "use client";
 
 import { useEffect, useState, useCallback, useMemo } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
-import { orders as ordersApi, rupees, formatApiError } from "@/lib/api";
+import { orders as ordersApi, returns as returnsApi, rupees, formatApiError } from "@/lib/api";
+import ReturnClaimModal from "@/components/returns/ReturnClaimModal";
+import ReturnStatusModal from "@/components/returns/ReturnStatusModal";
 import {
   Package,
   Calendar,
@@ -100,6 +103,27 @@ const CANCEL_PRESET_REASONS = [
   "Found alternative / Other reason",
 ];
 
+const RETURN_STATUS_COLORS = {
+  SUBMITTED: "border-sky-200 bg-sky-50 text-sky-800",
+  UNDER_REVIEW: "border-amber-200 bg-amber-50 text-amber-800",
+  APPROVED: "border-emerald-200 bg-emerald-50 text-emerald-800",
+  REJECTED: "border-rose-200 bg-rose-50 text-rose-800",
+  PICKUP_SCHEDULED: "border-indigo-200 bg-indigo-50 text-indigo-800",
+  PICKUP_FAILED: "border-rose-200 bg-rose-50 text-rose-800",
+  RECEIVED: "border-teal-200 bg-teal-50 text-teal-800",
+  INSPECTED: "border-violet-200 bg-violet-50 text-violet-800",
+  RESOLVED: "border-emerald-200 bg-emerald-50 text-emerald-800",
+};
+
+function findReturnCaseForOrder(cases, order) {
+  return cases.find((claim) => {
+    const claimOrderId = claim.orderId || claim.order?.id || claim.order?.orderId;
+    const claimOrderNumber = claim.orderNumber || claim.order?.orderNumber || claim.orderRef;
+    return (claimOrderId && String(claimOrderId) === String(order.id)) ||
+      (claimOrderNumber && order.orderNumber && String(claimOrderNumber) === String(order.orderNumber));
+  }) || null;
+}
+
 export default function UserOrders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -114,17 +138,21 @@ export default function UserOrders() {
   const [page, setPage] = useState(1);
   const [meta, setMeta] = useState(null);
   const [expandedOrders, setExpandedOrders] = useState({});
+  const [returnCases, setReturnCases] = useState([]);
 
   // Cancellation State (POST /orders/:orderNumber/cancel)
   const [cancelModalOrder, setCancelModalOrder] = useState(null);
   const [cancelReason, setCancelReason] = useState("");
   const [cancelLoading, setCancelLoading] = useState(false);
   const [cancelError, setCancelError] = useState("");
+  const [returnClaimOrder, setReturnClaimOrder] = useState(null);
+  const [returnStatusSelection, setReturnStatusSelection] = useState(null);
 
   // Timeline State (GET /orders/:orderNumber/timeline)
   const [selectedTimelineOrder, setSelectedTimelineOrder] = useState(null);
   const [timelineLoading, setTimelineLoading] = useState(false);
   const [timelineEvents, setTimelineEvents] = useState([]);
+  const [activeTimelineEventIndex, setActiveTimelineEventIndex] = useState(0);
   const [timelineError, setTimelineError] = useState("");
 
   // Invoice State (GET /orders/:orderNumber/invoice)
@@ -132,13 +160,38 @@ export default function UserOrders() {
   const [actionSuccess, setActionSuccess] = useState("");
   const [refreshingOrderId, setRefreshingOrderId] = useState(null);
 
+  const refreshReturnCases = useCallback(async () => {
+    try {
+      const result = await returnsApi.list();
+      const list = Array.isArray(result) ? result : result?.returnCases || result?.items || result?.claims || [];
+      setReturnCases(list);
+      return list;
+    } catch {
+      return [];
+    }
+  }, []);
+
   // Fetch orders list (GET /orders?page=1&pageSize=10)
   const fetchOrders = useCallback(async (targetPage = 1) => {
     setLoading(true);
     setError("");
     try {
       const res = await ordersApi.list(targetPage, 10);
-      setOrders(res.items || []);
+      const orderItems = res.items || [];
+      // The list response may omit return eligibility and purchased order-item IDs.
+      // Load full details for delivered orders so eligible claims can be shown and submitted.
+      const [enrichedOrders] = await Promise.all([Promise.all(orderItems.map(async (order) => {
+        const missingItemIds = !Array.isArray(order.items) || order.items.some((item) => !item.id);
+        const eligibilityMissing = typeof order.canRequestReturn !== "boolean";
+        if (order.status !== "DELIVERED" || (!eligibilityMissing && (order.canRequestReturn === false || !missingItemIds))) return order;
+        try {
+          const details = await ordersApi.get(order.orderNumber || order.id);
+          return { ...order, ...details };
+        } catch {
+          return order;
+        }
+      })), refreshReturnCases()]);
+      setOrders(enrichedOrders);
       setMeta(res.meta || null);
       setPage(targetPage);
     } catch (err) {
@@ -146,7 +199,7 @@ export default function UserOrders() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [refreshReturnCases]);
 
   useEffect(() => {
     fetchOrders(1);
@@ -162,6 +215,7 @@ export default function UserOrders() {
     setTimelineLoading(true);
     setTimelineError("");
     setTimelineEvents([]);
+    setActiveTimelineEventIndex(0);
     try {
       const orderIdentifier = order.orderNumber || order.id;
       const data = await ordersApi.timeline(orderIdentifier);
@@ -169,6 +223,7 @@ export default function UserOrders() {
         ? data
         : data?.timeline || data?.events || data?.history || [];
       setTimelineEvents(list);
+      setActiveTimelineEventIndex(Math.max(0, list.length - 1));
     } catch (err) {
       setTimelineError(formatApiError(err));
     } finally {
@@ -236,13 +291,29 @@ export default function UserOrders() {
     try {
       const latest = await ordersApi.get(order.orderNumber || order.id);
       setOrders((current) => current.map((item) => item.id === latest.id ? { ...item, ...latest } : item));
-      setActionSuccess(`Order #${order.orderNumber || order.id} shipment status refreshed.`);
+      if (selectedTimelineOrder?.id === latest.id) setSelectedTimelineOrder((current) => ({ ...current, ...latest }));
+      await refreshReturnCases();
+      setActionSuccess(`Order #${order.orderNumber || order.id} details and refund status refreshed.`);
       setTimeout(() => setActionSuccess(""), 5000);
     } catch (err) {
       setError(formatApiError(err));
     } finally {
       setRefreshingOrderId(null);
     }
+  };
+
+  const refreshReturnRefundStatus = async (order) => {
+    const latestOrder = await ordersApi.get(order.orderNumber || order.id);
+    setOrders((current) => current.map((item) => item.id === latestOrder.id ? { ...item, ...latestOrder } : item));
+    const result = await returnsApi.list();
+    const latestCases = Array.isArray(result) ? result : result?.returnCases || result?.items || result?.claims || [];
+    setReturnCases(latestCases);
+    const latestSelection = {
+      order: latestOrder,
+      returnCase: findReturnCaseForOrder(latestCases, latestOrder),
+    };
+    setReturnStatusSelection(latestSelection);
+    return latestSelection;
   };
 
   // Dynamic counts for status tabs
@@ -618,6 +689,7 @@ export default function UserOrders() {
             };
             const StatusIcon = config.icon;
             const isExpanded = !!expandedOrders[order.id];
+            const returnCase = findReturnCaseForOrder(returnCases, order);
 
             const placedDate = order.createdAt
               ? new Date(order.createdAt).toLocaleDateString("en-IN", {
@@ -648,6 +720,12 @@ export default function UserOrders() {
                           <StatusIcon className="h-3 w-3" />
                           <span>{config.label}</span>
                         </span>
+                        {returnCase?.status && (
+                          <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-semibold ${RETURN_STATUS_COLORS[returnCase.status] || "border-slate-200 bg-slate-50 text-slate-700"}`}>
+                            <RotateCcw className="h-3 w-3" />
+                            <span>Return: {String(returnCase.status).replaceAll("_", " ")}</span>
+                          </span>
+                        )}
                       </div>
                       <div className="mt-1 flex items-center gap-1.5 text-[11px] text-ink/60">
                         <Calendar className="h-3 w-3" />
@@ -660,6 +738,11 @@ export default function UserOrders() {
                       <p className="font-display text-lg font-bold text-pine-950">
                         {order.total || rupees(order.totalPaise)}
                       </p>
+                      {order.refundStatus && (
+                        <span className="mt-1 inline-flex rounded-full border border-indigo-200 bg-indigo-50 px-2 py-1 text-[10px] font-semibold text-indigo-800">
+                          Refund {String(order.refundStatus).replaceAll("_", " ")}
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -756,6 +839,22 @@ export default function UserOrders() {
                             <span>Order total</span>
                             <span>{order.total || rupees(order.totalPaise)}</span>
                           </div>
+                          {order.refundStatus && (
+                            <div className="mt-2 space-y-1.5 border-t border-ink/10 pt-2">
+                              <div className="flex justify-between gap-2 font-semibold text-indigo-900">
+                                <span>Refund status</span><span>{String(order.refundStatus).replaceAll("_", " ")}</span>
+                              </div>
+                              {order.totalRefundedPaise != null && <div className="flex justify-between text-ink/70"><span>Total refunded</span><span>{rupees(order.totalRefundedPaise)}</span></div>}
+                              {(order.refunds || []).map((refund) => (
+                                <div key={refund.id} className="flex flex-wrap justify-between gap-x-3 text-[11px] text-ink/60">
+                                  <span>Refund {refund.status?.toLowerCase()} · {refund.createdAt ? new Date(refund.createdAt).toLocaleDateString("en-IN") : ""}</span>
+                                  <span>{rupees(refund.amountPaise)}</span>
+                                </div>
+                              ))}
+                              {order.refundStatus === "PENDING" && <p className="text-[11px] leading-relaxed text-ink/60">Once processed, your bank may take 5–7 business days to reflect the refund.</p>}
+                              {order.refundStatus === "FAILED" && <p className="text-[11px] leading-relaxed text-rose-700">The refund attempt failed. Please contact customer support for help.</p>}
+                            </div>
+                          )}
                         </div>
                       </div>
                       {(order.shiprocketCancellation || order.shipments?.length > 0) && (
@@ -778,7 +877,14 @@ export default function UserOrders() {
                           {Array.isArray(order.shipments) && order.shipments.length > 0 && (
                             <ul className="mt-2 space-y-1 text-ink/70">
                               {order.shipments.map((shipment, index) => (
-                                <li key={shipment.id || index}>{shipment.courierName || shipment.provider || "Shiprocket"}: <span className="font-semibold text-pine-950">{shipment.status || "Status unavailable"}</span></li>
+                                <li key={shipment.id || index} className="rounded-lg bg-white/70 px-3 py-2">
+                                  <div className="flex flex-wrap items-center justify-between gap-2">
+                                    <span className="font-semibold text-pine-950">{shipment.courier || shipment.courierName || shipment.provider || "Shiprocket"}</span>
+                                    <span>{shipment.trackingStatus || shipment.status || "Status unavailable"}</span>
+                                  </div>
+                                  {shipment.awb && <p className="mt-1">AWB: <span className="font-medium text-pine-950">{shipment.awb}</span></p>}
+                                  {shipment.trackingUrl && <a href={shipment.trackingUrl} target="_blank" rel="noreferrer" className="mt-1 inline-block font-semibold text-pine-800 underline">Track with courier</a>}
+                                </li>
                               ))}
                             </ul>
                           )}
@@ -786,6 +892,12 @@ export default function UserOrders() {
                         </div>
                       )}
                     </div>
+                  )}
+
+                  {order.status === "CANCELLED" && !order.refundStatus && (
+                    <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-900">
+                      Cancellation does not start a refund automatically. Refund progress will appear here once processing begins.
+                    </p>
                   )}
 
                   {/* Actions Footer */}
@@ -809,6 +921,27 @@ export default function UserOrders() {
                     </button>
 
                     <div className="flex flex-wrap items-center gap-2">
+                      {(returnCase || order.refundStatus || order.refunds?.length || ["DELIVERED", "CANCELLED"].includes(order.status)) && (
+                        <button
+                          type="button"
+                          onClick={() => setReturnStatusSelection({ order, returnCase })}
+                          className="inline-flex items-center gap-1.5 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1.5 font-semibold text-indigo-900 transition hover:bg-indigo-100"
+                        >
+                          <Search className="h-3.5 w-3.5" />
+                          <span>Check Return / Refund Status</span>
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => refreshOrder(order)}
+                        disabled={refreshingOrderId === order.id}
+                        className="inline-flex items-center gap-1.5 rounded-full border border-ink/15 bg-white px-3 py-1.5 font-semibold text-ink/70 transition hover:bg-ink/5 disabled:opacity-50"
+                      >
+                        <RefreshCw className={`h-3.5 w-3.5 ${refreshingOrderId === order.id ? "animate-spin" : ""}`} />
+                        <span>Refresh order</span>
+                      </button>
+
                       {/* Order Timeline (GET /orders/:orderNumber/timeline) */}
                       <button
                         type="button"
@@ -819,8 +952,8 @@ export default function UserOrders() {
                         <span>Track Timeline</span>
                       </button>
 
-                      {/* Download GST Invoice (GET /orders/:orderNumber/invoice) */}
-                      <button
+                      {/* Cancelled orders should not offer an invoice download. */}
+                      {order.status !== "CANCELLED" && <button
                         type="button"
                         onClick={() => handleDownloadInvoice(order)}
                         disabled={downloadingId === order.id}
@@ -834,7 +967,7 @@ export default function UserOrders() {
                         <span>
                           {downloadingId === order.id ? "Downloading…" : "GST Invoice"}
                         </span>
-                      </button>
+                      </button>}
 
                       {/* Cancel Order (POST /orders/:orderNumber/cancel) */}
                       {(order.canCancel ?? ["PENDING", "COD_CONFIRMED", "PAID"].includes(order.status)) && (
@@ -850,6 +983,20 @@ export default function UserOrders() {
                           <XCircle className="h-3.5 w-3.5 text-rose-600" />
                           <span>Cancel Order</span>
                         </button>
+                      )}
+
+                      {order.canRequestReturn === true && (
+                        <button
+                          type="button"
+                          onClick={() => setReturnClaimOrder(order)}
+                          className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-3 py-1.5 font-semibold text-amber-900 transition-colors hover:bg-amber-100"
+                        >
+                          <RotateCcw className="h-3.5 w-3.5" />
+                          <span>Return / Report damage</span>
+                        </button>
+                      )}
+                      {order.status === "DELIVERED" && order.canRequestReturn === false && (
+                        <span className="text-[10px] text-ink/50">Damage or leak claims are available within 24 hours of delivery.</span>
                       )}
                     </div>
                   </div>
@@ -976,20 +1123,12 @@ export default function UserOrders() {
       {/* ========================================================================= */}
       {/* ORDER TIMELINE MODAL (GET /orders/:orderNumber/timeline) */}
       {/* ========================================================================= */}
-      {selectedTimelineOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
-          <div className="relative w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-3xl border border-gold/30 bg-cream-paper p-6 shadow-2xl">
-            {/* Close Button */}
-            <button
-              type="button"
-              onClick={() => setSelectedTimelineOrder(null)}
-              className="absolute right-5 top-5 rounded-full p-1.5 text-ink/40 hover:bg-ink/10 hover:text-ink transition-colors"
-            >
-              <X className="h-5 w-5" />
-            </button>
-
+      {selectedTimelineOrder && typeof document !== "undefined" && createPortal(
+        <div style={{ zIndex: 9999 }} className="fixed inset-0 flex items-center justify-center overflow-hidden bg-black/60 p-3 backdrop-blur-xs sm:p-5">
+          <div data-lenis-prevent className="relative flex max-h-[90dvh] w-full max-w-4xl flex-col overflow-hidden rounded-3xl border border-gold/30 bg-cream-paper shadow-2xl">
             {/* Modal Header */}
-            <div className="pr-8">
+            <header className="relative flex flex-shrink-0 items-start justify-between gap-4 border-b border-ink/10 px-5 py-4 sm:px-8 sm:py-5">
+              <div className="pr-8">
               <div className="flex items-center gap-2">
                 <span className="rounded-full bg-gold/15 p-1.5 text-gold-deep">
                   <Truck className="h-4 w-4" />
@@ -1005,9 +1144,19 @@ export default function UserOrders() {
                 Real-time milestone updates from our cold-press production facility to your doorstep.
               </p>
             </div>
+              <button
+                type="button"
+                onClick={() => setSelectedTimelineOrder(null)}
+                aria-label="Close shipment tracking"
+                className="absolute right-4 top-4 rounded-full p-1.5 text-ink/40 transition-colors hover:bg-ink/10 hover:text-ink sm:right-6 sm:top-5"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </header>
 
+            <div className="cart-drawer-scroll min-h-0 flex-1 space-y-6 overflow-y-auto overscroll-contain px-5 py-5 sm:px-8 sm:py-6">
             {/* Visual Step Progress Bar */}
-            <div className="mt-6 rounded-2xl border border-gold/20 bg-white/70 p-4">
+            <div className="rounded-2xl border border-gold/20 bg-white/70 p-4">
               <div className="flex items-center justify-between text-[11px] font-semibold text-pine-950">
                 <span>Placed</span>
                 <span>Confirmed</span>
@@ -1035,7 +1184,12 @@ export default function UserOrders() {
                   </div>
                 );
               })()}
-              <div className="mt-2 flex items-center justify-between text-[10px] text-ink/50">
+      {selectedTimelineOrder.status === "CANCELLED" && !selectedTimelineOrder.refundStatus && (
+                    <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-900">
+                      Cancellation does not start a refund automatically. Refund progress will appear here once processing begins.
+                    </p>
+                  )}
+                  <div className="mt-2 flex items-center justify-between text-[10px] text-ink/50">
                 <span>
                   Current Status:{" "}
                   <strong className="text-pine-950">
@@ -1047,22 +1201,17 @@ export default function UserOrders() {
             </div>
 
             {/* Detailed Timeline Events Feed */}
-            <div className="mt-6 space-y-4">
+            <div className="space-y-4">
               <h4 className="text-xs font-bold uppercase tracking-wider text-pine-900">
                 Activity Log
               </h4>
 
               {timelineLoading ? (
-                <div className="space-y-3 py-4">
-                  {[1, 2, 3].map((n) => (
-                    <div key={n} className="flex gap-3 animate-pulse">
-                      <div className="h-6 w-6 rounded-full bg-ink/10 flex-shrink-0" />
-                      <div className="space-y-1.5 flex-1">
-                        <div className="h-3 w-32 bg-ink/10 rounded" />
-                        <div className="h-2.5 w-48 bg-ink/5 rounded" />
-                      </div>
-                    </div>
-                  ))}
+                <div className="space-y-4 py-2 animate-pulse">
+                  <div className="flex justify-between gap-3">
+                    {[1, 2, 3, 4].map((n) => <div key={n} className="h-9 w-9 rounded-full bg-ink/10" />)}
+                  </div>
+                  <div className="h-32 rounded-2xl bg-ink/5" />
                 </div>
               ) : timelineError ? (
                 <div className="rounded-2xl border border-amber-300 bg-amber-50 p-4 text-xs text-amber-900">
@@ -1076,105 +1225,96 @@ export default function UserOrders() {
                     Try Refreshing Timeline
                   </button>
                 </div>
-              ) : (
-                <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-gold/30">
-                  {timelineEvents.length > 0 ? (
-                    timelineEvents.map((event, idx) => {
-                      const eventDate = event.createdAt || event.timestamp || event.time;
-                      const formattedTime = eventDate
-                        ? new Date(eventDate).toLocaleDateString("en-IN", {
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })
-                        : "Just now";
+              ) : timelineEvents.length > 0 ? (
+                <>
+                  <div className="relative overflow-x-auto px-1 pb-2 pt-1">
+                    <div className="absolute left-5 right-5 top-[1.15rem] h-0.5 bg-gold/35" />
+                    <div className="relative flex min-w-max gap-2 sm:min-w-0 sm:gap-0">
+                      {timelineEvents.map((event, idx) => {
+                        const isActive = idx === activeTimelineEventIndex;
+                        const isComplete = idx <= activeTimelineEventIndex;
+                        return (
+                          <button
+                            key={event.id || idx}
+                            type="button"
+                            onClick={() => setActiveTimelineEventIndex(idx)}
+                            aria-pressed={isActive}
+                            className="group flex min-w-[112px] flex-1 flex-col items-center px-2 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pine-700 sm:min-w-0"
+                          >
+                            <span className={`relative z-10 flex h-8 w-8 items-center justify-center rounded-full border-2 transition ${
+                              isActive
+                                ? "border-pine-900 bg-pine-900 text-gold-light shadow-md ring-4 ring-pine-900/10"
+                                : isComplete
+                                  ? "border-pine-800 bg-pine-800 text-white"
+                                  : "border-gold/50 bg-cream-paper text-ink/40"
+                            }`}>
+                              {isComplete ? <Check className="h-3.5 w-3.5" /> : <span className="text-xs font-semibold">{idx + 1}</span>}
+                            </span>
+                            <span className={`mt-2 line-clamp-2 max-w-32 text-[11px] leading-snug ${isActive ? "font-bold text-pine-950" : "font-medium text-ink/60"}`}>
+                              {event.title || event.status || "Order update"}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
 
-                      return (
-                        <div key={idx} className="relative group">
-                          {/* Node Icon */}
-                          <div className="absolute -left-6 top-0 flex h-5 w-5 items-center justify-center rounded-full bg-pine-900 text-gold-light ring-4 ring-cream-paper shadow-2xs">
-                            <Check className="h-3 w-3" />
-                          </div>
+                  {(() => {
+                    const event = timelineEvents[activeTimelineEventIndex] || timelineEvents[timelineEvents.length - 1];
+                    const eventDate = event.createdAt || event.timestamp || event.time;
+                    const formattedTime = eventDate
+                      ? new Date(eventDate).toLocaleDateString("en-IN", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })
+                      : "Just now";
+                    const eventBody = event.body || event.description || event.message;
 
-                          <div className="rounded-2xl border border-ink/8 bg-white/80 p-3.5 shadow-2xs">
-                            <div className="flex items-center justify-between gap-2">
-                              <span className="font-bold text-xs text-pine-950">
-                                {event.title || event.status || "Milestone Update"}
-                              </span>
-                              <span className="text-[10px] text-ink/50 whitespace-nowrap">
-                                {formattedTime}
-                              </span>
+                    return (
+                      <article className="mt-4 rounded-2xl border border-gold/25 bg-white/80 p-5 shadow-sm sm:p-6" aria-live="polite">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div className="flex items-center gap-2.5">
+                            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-pine-900/5 text-pine-900">
+                              <Activity className="h-4 w-4" />
+                            </span>
+                            <div>
+                              <p className="text-[10px] font-bold uppercase tracking-wider text-pine-800">Update {activeTimelineEventIndex + 1} of {timelineEvents.length}</p>
+                              <h5 className="mt-0.5 font-display text-lg font-bold leading-snug text-pine-950">
+                                {event.title || event.status || "Order update"}
+                              </h5>
                             </div>
-
-                            {(event.description || event.message) && (
-                              <p className="mt-1 text-xs text-ink/75 leading-relaxed">
-                                {event.description || event.message}
-                              </p>
-                            )}
-
-                            {event.location && (
-                              <div className="mt-2 flex items-center gap-1 text-[11px] text-ink/60">
-                                <MapPin className="h-3 w-3 text-gold-deep" />
-                                <span>{event.location}</span>
-                              </div>
-                            )}
                           </div>
+                          <time className="rounded-full bg-cream-paper px-3 py-1.5 text-[11px] font-medium text-ink/60">
+                            {formattedTime}
+                          </time>
                         </div>
-                      );
-                    })
-                  ) : (
-                    /* Default baseline milestones if events list is fresh */
-                    <>
-                      <div className="relative">
-                        <div className="absolute -left-6 top-0 flex h-5 w-5 items-center justify-center rounded-full bg-pine-900 text-gold-light ring-4 ring-cream-paper">
-                          <Check className="h-3 w-3" />
-                        </div>
-                        <div className="rounded-2xl border border-ink/8 bg-white/80 p-3.5">
-                          <span className="font-bold text-xs text-pine-950">
-                            Order Placed & Confirmed
-                          </span>
-                          <p className="mt-1 text-xs text-ink/70">
-                            Your order has been verified and registered in our Rajasthan production ledger.
-                          </p>
-                          <span className="mt-1.5 block text-[10px] text-ink/50">
-                            {selectedTimelineOrder.createdAt
-                              ? new Date(selectedTimelineOrder.createdAt).toLocaleDateString("en-IN", {
-                                  day: "numeric",
-                                  month: "short",
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })
-                              : "Recent"}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="relative">
-                        <div className="absolute -left-6 top-0 flex h-5 w-5 items-center justify-center rounded-full bg-gold text-pine-950 ring-4 ring-cream-paper">
-                          <Clock className="h-3 w-3" />
-                        </div>
-                        <div className="rounded-2xl border border-gold/30 bg-gold/5 p-3.5">
-                          <span className="font-bold text-xs text-pine-950">
-                            Traditional Wood-Churn Pressing & Quality Dispatch
-                          </span>
-                          <p className="mt-1 text-xs text-ink/70">
-                            Bottles are freshly filled in small batches to preserve natural pungency and antioxidants.
-                          </p>
-                          <span className="mt-1.5 block text-[10px] text-gold-deep font-semibold">
-                            Estimated Dispatch: 24–48 Hours
-                          </span>
-                        </div>
-                      </div>
-                    </>
-                  )}
+                        {eventBody && <p className="mt-4 border-t border-ink/8 pt-4 text-sm leading-relaxed text-ink/75">{eventBody}</p>}
+                        {event.location && (
+                          <div className="mt-3 flex items-center gap-1.5 text-xs text-ink/60">
+                            <MapPin className="h-3.5 w-3.5 text-gold-deep" />
+                            <span>{event.location}</span>
+                          </div>
+                        )}
+                      </article>
+                    );
+                  })()}
+                </>
+              ) : (
+                <div className="rounded-2xl border border-dashed border-gold/40 bg-white/50 px-5 py-8 text-center">
+                  <Truck className="mx-auto h-6 w-6 text-gold-deep" />
+                  <p className="mt-2 text-sm font-semibold text-pine-950">No tracking updates yet</p>
+                  <p className="mt-1 text-xs text-ink/60">New order milestones will appear here as they become available.</p>
                 </div>
               )}
             </div>
 
+            </div>
+
             {/* Modal Bottom Actions */}
-            <div className="mt-6 flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-ink/10">
+            <footer className="flex flex-shrink-0 flex-wrap items-center justify-between gap-3 border-t border-ink/10 bg-cream-paper px-5 py-4 sm:px-8">
               <button
                 type="button"
                 onClick={() => handleDownloadInvoice(selectedTimelineOrder)}
@@ -1196,45 +1336,48 @@ export default function UserOrders() {
               >
                 Close Tracking
               </button>
-            </div>
+            </footer>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ========================================================================= */}
       {/* CANCEL ORDER MODAL (POST /orders/:orderNumber/cancel) */}
       {/* ========================================================================= */}
       {cancelModalOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
-          <div className="w-full max-w-md rounded-3xl border border-gold/30 bg-cream-paper p-6 shadow-2xl">
-            <div className="flex items-center gap-2 text-rose-900 mb-2">
-              <AlertCircle className="h-5 w-5 text-rose-600 flex-shrink-0" />
-              <h3 className="font-display text-lg font-bold">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-3 backdrop-blur-xs sm:p-6">
+          <div className="max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-3xl border border-gold/30 bg-cream-paper p-5 shadow-2xl sm:p-8">
+            <div className="mb-4 flex items-start gap-3 text-rose-900">
+              <span className="mt-0.5 rounded-full bg-rose-50 p-2">
+                <AlertCircle className="h-5 w-5 text-rose-600" />
+              </span>
+              <h3 className="min-w-0 font-display text-xl font-bold leading-snug sm:text-2xl">
                 Cancel Order #{cancelModalOrder.orderNumber || cancelModalOrder.id}
               </h3>
             </div>
-            <p className="text-xs text-ink/70">
+            <p className="rounded-2xl bg-white/70 p-4 text-sm leading-relaxed text-ink/70">
               Are you sure you want to cancel this order? Any reserved inventory will be released and
               the cancellation request is irreversible.
             </p>
-            {cancelModalOrder.shipments?.length > 0 && <p className="mt-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-[11px] leading-5 text-amber-900">The API will request cancellation of the Shiprocket order. If a courier or AWB was already booked manually, cancel that shipment in Shiprocket as well.</p>}
+            {cancelModalOrder.shipments?.length > 0 && <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs leading-relaxed text-amber-900">The API will request cancellation of the Shiprocket order. If a courier or AWB was already booked manually, cancel that shipment in Shiprocket as well.</p>}
 
-            <form onSubmit={handleCancelSubmit} className="mt-4 space-y-4">
+            <form onSubmit={handleCancelSubmit} className="mt-6 space-y-6">
               {/* Preset Reason Chips */}
               <div>
-                <label className="block text-xs font-semibold text-pine-950 mb-2">
+                <label className="mb-3 block text-sm font-semibold text-pine-950">
                   Select a reason for cancellation <span className="text-rose-500">*</span>
                 </label>
-                <div className="space-y-1.5">
+                <div className="space-y-2">
                   {CANCEL_PRESET_REASONS.map((r, i) => (
                     <button
                       key={i}
                       type="button"
                       onClick={() => setCancelReason(r)}
-                      className={`w-full text-left rounded-xl border px-3 py-1.5 text-xs transition-all ${
+                      className={`w-full rounded-xl border px-4 py-3 text-left text-sm leading-snug transition-all ${
                         cancelReason === r
-                          ? "border-rose-400 bg-rose-50 text-rose-900 font-semibold"
-                          : "border-ink/10 bg-white text-ink/80 hover:bg-ink/5"
+                          ? "border-rose-400 bg-rose-50 text-rose-900 font-semibold shadow-sm"
+                          : "border-ink/10 bg-white text-ink/80 hover:border-gold/50 hover:bg-gold/5"
                       }`}
                     >
                       {r}
@@ -1244,16 +1387,17 @@ export default function UserOrders() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-pine-950 mb-1">
-                  Additional remarks or custom reason:
+                <label className="mb-2 block text-sm font-semibold text-pine-950">
+                  Reason details
+                  <span className="ml-1 font-normal text-ink/50">(edit or add context)</span>
                 </label>
                 <textarea
                   value={cancelReason}
                   onChange={(e) => setCancelReason(e.target.value)}
                   placeholder="Tell us what went wrong so we can improve…"
-                  rows={2}
+                  rows={3}
                   required
-                  className="w-full rounded-2xl border border-ink/20 bg-white p-3 text-xs text-ink outline-none focus:border-pine-800"
+                  className="w-full resize-y rounded-2xl border border-ink/15 bg-white p-4 text-sm leading-relaxed text-ink outline-none transition focus:border-pine-800 focus:ring-2 focus:ring-pine-800/10"
                 />
               </div>
 
@@ -1261,19 +1405,19 @@ export default function UserOrders() {
                 <p className="text-xs text-rose-600 font-medium">{cancelError}</p>
               )}
 
-              <div className="flex items-center justify-end gap-2 pt-2">
+              <div className="flex flex-col-reverse gap-3 border-t border-ink/10 pt-5 sm:flex-row sm:justify-end">
                 <button
                   type="button"
                   onClick={() => setCancelModalOrder(null)}
                   disabled={cancelLoading}
-                  className="rounded-full border border-ink/20 px-4 py-2 text-xs font-semibold text-ink hover:bg-ink/5"
+                  className="rounded-full border border-ink/20 px-5 py-3 text-sm font-semibold text-ink transition hover:bg-ink/5 sm:py-2.5"
                 >
                   Keep Order
                 </button>
                 <button
                   type="submit"
                   disabled={cancelLoading || !cancelReason.trim()}
-                  className="rounded-full bg-rose-600 px-4 py-2 text-xs font-semibold text-white hover:bg-rose-700 disabled:opacity-50 shadow-md transition-all"
+                  className="rounded-full bg-rose-600 px-5 py-3 text-sm font-semibold text-white shadow-md transition-all hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-50 sm:py-2.5"
                 >
                   {cancelLoading ? "Cancelling…" : "Confirm Cancellation"}
                 </button>
@@ -1281,6 +1425,39 @@ export default function UserOrders() {
             </form>
           </div>
         </div>
+      )}
+
+      {returnClaimOrder && (
+        <ReturnClaimModal
+          order={returnClaimOrder}
+          onClose={() => setReturnClaimOrder(null)}
+          onSubmitted={async (submittedCase) => {
+            setReturnClaimOrder(null);
+            const latest = await ordersApi.get(returnClaimOrder.orderNumber || returnClaimOrder.id).catch(() => null);
+            if (latest) setOrders((current) => current.map((order) => order.id === latest.id ? { ...order, ...latest } : order));
+            await refreshReturnCases();
+            if (submittedCase?.id) {
+              const linkedCase = {
+                ...submittedCase,
+                orderId: submittedCase.orderId || returnClaimOrder.id,
+                orderNumber: submittedCase.orderNumber || returnClaimOrder.orderNumber,
+              };
+              setReturnCases((current) => [linkedCase, ...current.filter((claim) => claim.id !== linkedCase.id)]);
+            }
+            await fetchOrders(page);
+            setActionSuccess("Your claim was submitted for review. We’ll update its status in My Returns.");
+            setTimeout(() => setActionSuccess(""), 6000);
+          }}
+        />
+      )}
+
+      {returnStatusSelection && (
+        <ReturnStatusModal
+          order={returnStatusSelection.order}
+          returnCase={returnStatusSelection.returnCase}
+          onClose={() => setReturnStatusSelection(null)}
+          onRefresh={() => refreshReturnRefundStatus(returnStatusSelection.order)}
+        />
       )}
     </div>
   );

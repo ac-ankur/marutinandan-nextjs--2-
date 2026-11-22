@@ -117,27 +117,97 @@ export default function ProductPricingSection({ product }) {
   const [addState, setAddState] = useState("idle");
   const [addError, setAddError] = useState("");
 
+  const handleSelectVariant = useCallback((variant) => {
+    setSelectedVariant(variant);
+    if (typeof window !== "undefined" && dynamicProduct?.slug) {
+      const url = new URL(window.location.href);
+      url.searchParams.set("variant", variant.id);
+      window.history.replaceState(null, "", url.toString());
+    }
+  }, [dynamicProduct?.slug]);
+
   useEffect(() => {
     let active = true;
     if (isDynamic) {
       setLoading(true);
       setApiError("");
+
+      const getInitialVariantId = () => {
+        if (typeof window === "undefined") return null;
+        return new URLSearchParams(window.location.search).get("variant");
+      };
+
+      const selectMatchingVariant = (prod, preferredId, hintSize) => {
+        if (!prod?.variants || prod.variants.length === 0) return null;
+        if (preferredId) {
+          const byId = prod.variants.find((v) => v.id === preferredId);
+          if (byId) return byId;
+        }
+        if (hintSize) {
+          const normHint = String(hintSize).toLowerCase().replace(/[\s\-_]/g, "");
+          const bySize = prod.variants.find((v) => {
+            const vLabel = (v.label || v.sku || "").toLowerCase().replace(/[\s\-_]/g, "");
+            return vLabel.includes(normHint) || normHint.includes(vLabel);
+          });
+          if (bySize) return bySize;
+        }
+        return prod.variants[0];
+      };
+
       shop.product(product.slug)
         .then((res) => {
           if (!active) return;
           const p = res?.product || res;
           if (p?.variants?.length > 0) {
             setDynamicProduct(p);
-            setSelectedVariant(p.variants[0]);
+            const initialVarId = getInitialVariantId();
+            setSelectedVariant(selectMatchingVariant(p, initialVarId, product.sizeKey || product.size));
           } else {
             setApiError("This product has no live variants available.");
           }
         })
-        .catch((err) => { if (active) setApiError(formatApiError(err)); })
+        .catch(async () => {
+          // If shop.product(slug) returned 404 (e.g. user arrived via legacy slug like black-mustard-oil-1l),
+          // gracefully look up the catalog from shop.products() to find the active live product!
+          try {
+            const catalogRes = await shop.products({ pageSize: 50 });
+            if (!active) return;
+            const liveItems = catalogRes?.items || [];
+            if (liveItems.length > 0) {
+              const isYellow = product.slug?.toLowerCase().includes("yellow");
+              const isPeanut = product.slug?.toLowerCase().includes("peanut") || product.slug?.toLowerCase().includes("groundnut");
+
+              let matched = liveItems.find((p) => {
+                const pSlug = (p.slug || "").toLowerCase();
+                const pName = (p.name || "").toLowerCase();
+                if (isYellow) return pSlug.includes("yellow") || pName.includes("yellow");
+                if (isPeanut) return pSlug.includes("peanut") || pSlug.includes("groundnut") || pName.includes("peanut");
+                return true;
+              }) || liveItems[0];
+
+              if (matched && matched.variants?.length > 0) {
+                setDynamicProduct(matched);
+                const initialVarId = getInitialVariantId();
+                const matchedVariant = selectMatchingVariant(matched, initialVarId, product.sizeKey || product.size);
+                setSelectedVariant(matchedVariant);
+                setApiError("");
+
+                if (typeof window !== "undefined" && matched.slug) {
+                  const newUrl = `/products/${matched.slug}${matchedVariant ? `?variant=${matchedVariant.id}` : ""}`;
+                  window.history.replaceState(null, "", newUrl);
+                }
+                return;
+              }
+            }
+            setApiError("Product is currently unavailable in the live catalog.");
+          } catch (catalogErr) {
+            if (active) setApiError(formatApiError(catalogErr));
+          }
+        })
         .finally(() => { if (active) setLoading(false); });
     }
     return () => { active = false; };
-  }, [isDynamic, product.slug]);
+  }, [isDynamic, product.slug, product.sizeKey, product.size]);
 
   useEffect(() => { setAddState("idle"); setAddError(""); }, [selectedVariant, isDynamic]);
 
@@ -212,7 +282,7 @@ export default function ProductPricingSection({ product }) {
                 <button
                   key={v.id || v.sku}
                   type="button"
-                  onClick={() => setSelectedVariant(v)}
+                  onClick={() => handleSelectVariant(v)}
                   className={`flex flex-col items-center rounded-2xl border-2 px-4 py-2.5 text-xs font-medium transition-all ${
                     isSelected
                       ? "border-pine-800 bg-pine-800 text-cream shadow-md"

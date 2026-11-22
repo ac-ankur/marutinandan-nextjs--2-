@@ -2,9 +2,12 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image";
+import SafeImage, { getStaticFallback } from "@/components/SafeImage";
+import { shop } from "@/lib/api";
+import { getPackPackaging } from "@/data/products";
 
-export default function HorizontalGallery({ items }) {
+export default function HorizontalGallery({ items: initialItems = [] }) {
+  const [galleryItems, setGalleryItems] = useState(initialItems);
   const [activeHover, setActiveHover] = useState(null);
   const [activeFocusedIndex, setActiveFocusedIndex] = useState(0);
 
@@ -13,10 +16,87 @@ export default function HorizontalGallery({ items }) {
   const [tilt, setTilt] = useState({ rx: 0, ry: 0 });
 
   const cardRefs = useRef([]);
-  const imageRefs = useRef([]); // NEW: refs scoped to just the image wrapper
+  const imageRefs = useRef([]); // Scoped to just the image wrapper
   const galleryTrackRef = useRef(null);
   const edgeScrollDirectionRef = useRef(0);
   const edgeScrollFrameRef = useRef(null);
+
+  // Fetch live catalog items from Live API
+  useEffect(() => {
+    let active = true;
+    shop.products({ pageSize: 24 })
+      .then((res) => {
+        if (!active) return;
+        const productsList = res?.items || [];
+        if (productsList.length > 0) {
+          const dynamicItems = [];
+          productsList.forEach((prod) => {
+            const isYellow = prod.name?.toLowerCase().includes("yellow") || prod.slug?.includes("yellow");
+            const isPeanut = prod.name?.toLowerCase().includes("peanut") || prod.slug?.includes("peanut");
+            const accent = isYellow ? "#E7C25C" : isPeanut ? "#E0A96D" : "#D3A02E";
+            const fallbackImg = isPeanut
+              ? "/images/yugika-gold-peanut-oil.png"
+              : isYellow
+              ? "/images/yellowmustard.png"
+              : "/images/blackmustard.png";
+
+            if (Array.isArray(prod.variants) && prod.variants.length > 0) {
+              prod.variants.forEach((v) => {
+                const img = v.images?.[0]?.url || prod.images?.[0]?.url || getStaticFallback(`${prod.name} ${v.label}`);
+                const price = v.price ?? (v.pricePaise ? v.pricePaise / 100 : prod.fromPrice);
+                const mrp = v.mrp ?? (v.mrpPaise ? v.mrpPaise / 100 : price);
+                const unit = getPackPackaging(v.label || v.sku || prod.name);
+                dynamicItems.push({
+                  slug: prod.slug,
+                  variantId: v.id,
+                  image: img,
+                  size: v.label || "1 Litre",
+                  stockUnit: unit,
+                  price,
+                  mrp,
+                  inStock: v.inStock !== false,
+                  variantData: {
+                    name: prod.name,
+                    tagline: prod.description || "Strong. Aromatic. Traditional Kachi Ghani.",
+                    accent,
+                  },
+                });
+              });
+            } else {
+              const img = prod.images?.[0]?.url || fallbackImg;
+              const unit = getPackPackaging(prod.name);
+              dynamicItems.push({
+                slug: prod.slug,
+                image: img,
+                size: "Standard",
+                stockUnit: unit,
+                price: prod.fromPrice,
+                inStock: prod.inStock !== false,
+                variantData: {
+                  name: prod.name,
+                  tagline: prod.description || "100% Pure Cold Pressed Mustard Oil",
+                  accent,
+                },
+              });
+            }
+          });
+
+          if (dynamicItems.length > 0) {
+            setGalleryItems(dynamicItems);
+          }
+        }
+      })
+      .catch(() => {});
+
+    return () => { active = false; };
+  }, []);
+
+  // Update galleryItems if parent props change and dynamicItems hasn't loaded
+  useEffect(() => {
+    if (initialItems && initialItems.length > 0 && galleryItems.length === 0) {
+      setGalleryItems(initialItems);
+    }
+  }, [initialItems, galleryItems.length]);
 
   // Let desktop users scroll the gallery by hovering near either edge.
   const scrollAtEdge = () => {
@@ -74,9 +154,9 @@ export default function HorizontalGallery({ items }) {
     });
 
     return () => observer.disconnect();
-  }, [items]);
+  }, [galleryItems]);
 
-  // Tilt now tracks the whole card (kept as-is, feels nicer for the 3D lift)
+  // Tilt tracks the whole card
   const handleCardMouseMove = (e, index) => {
     const card = cardRefs.current[index];
     if (!card) return;
@@ -93,7 +173,7 @@ export default function HorizontalGallery({ items }) {
     setTilt({ rx: rotateX, ry: rotateY });
   };
 
-  // Zoom lens now tracks ONLY the image wrapper, not the full card
+  // Zoom lens tracks ONLY the image wrapper
   const handleImageMouseMove = (e, index) => {
     const imageEl = imageRefs.current[index];
     if (!imageEl) return;
@@ -137,14 +217,15 @@ export default function HorizontalGallery({ items }) {
         onMouseLeave={stopEdgeScroll}
         className="gallery-scroll flex w-full gap-6 overflow-x-auto snap-x snap-mandatory py-12 px-6 lg:px-10"
       >
-        {items.map((item, index) => {
+        {galleryItems.map((item, index) => {
           const isHovered = activeHover === index;
           const isFocusedMobile = activeFocusedIndex === index;
+          const targetUrl = `/products/${item.slug}${item.variantId ? `?variant=${item.variantId}` : ""}`;
 
           return (
             <Link
-              href={`/products/${item.slug}`}
-              key={`${item.slug}-${index}`}
+              href={targetUrl}
+              key={`${item.slug}-${item.variantId || index}`}
               ref={(el) => (cardRefs.current[index] = el)}
               data-index={index}
               data-cursor-hover
@@ -161,11 +242,10 @@ export default function HorizontalGallery({ items }) {
               {/* Glow ambient background */}
               <div
                 className="pointer-events-none absolute right-6 top-6 h-28 w-28 rounded-full opacity-80 blur-2xl transition-opacity duration-300 group-hover:opacity-100"
-                style={{ background: item.variantData.accent }}
+                style={{ background: item.variantData?.accent || "#D3A02E" }}
               />
 
               {/* Product Image Wrapper with Mobile 3D Pop-Out & Desktop Lift */}
-              {/* This div is now the ONLY area that triggers/clips the zoom lens */}
               <div
                 ref={(el) => (imageRefs.current[index] = el)}
                 onMouseMove={(e) => handleImageMouseMove(e, index)}
@@ -179,9 +259,10 @@ export default function HorizontalGallery({ items }) {
                       : "scale-95 opacity-85 sm:scale-100 sm:opacity-100"
                   } ${isHovered ? "sm:scale-105 sm:-translate-y-2" : ""}`}
                 >
-                  <Image
+                  <SafeImage
                     src={item.image}
-                    alt={`${item.variantData.name} - ${item.size}`}
+                    alt={`${item.variantData?.name || "Product"} - ${item.size}`}
+                    fallbackHint={`${item.variantData?.name || ""} ${item.size}`}
                     fill
                     className="object-contain object-center drop-shadow-xl"
                     sizes="(max-width: 768px) 300px, 340px"
@@ -189,7 +270,7 @@ export default function HorizontalGallery({ items }) {
                   />
                 </div>
 
-                {/* Desktop Magnifying Lens Overlay — now positioned/clipped to the image box only */}
+                {/* Desktop Magnifying Lens Overlay */}
                 {isHovered && (
                   <div
                     className="pointer-events-none absolute z-30 hidden rounded-full border border-gold-light/60 shadow-2xl sm:block"
@@ -209,14 +290,24 @@ export default function HorizontalGallery({ items }) {
 
               {/* Product Details */}
               <div className="relative z-10">
-                <p className="text-xs uppercase tracking-[0.25em] text-gold-light">
-                  {item.size} · {item.stockUnit}
-                </p>
-                <h3 className="mt-2 font-display text-2xl text-cream">{item.variantData.name}</h3>
-                <p className="mt-2 text-sm text-cream/60">{item.variantData.tagline}</p>
-                <div className="mt-5 flex items-center justify-end border-t border-cream/10 pt-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs uppercase tracking-[0.25em] text-gold-light">
+                    {item.size} · {getPackPackaging(item.size || item.stockUnit || item.slug)}
+                  </p>
+                  {item.price != null && (
+                    <span className="font-display text-base font-bold text-cream">
+                      ₹{item.price}
+                    </span>
+                  )}
+                </div>
+                <h3 className="mt-2 font-display text-2xl text-cream line-clamp-1">{item.variantData?.name}</h3>
+                <p className="mt-1 text-sm text-cream/60 line-clamp-2">{item.variantData?.tagline}</p>
+                <div className="mt-5 flex items-center justify-between border-t border-cream/10 pt-4">
+                  <span className={`text-xs font-medium ${item.inStock !== false ? "text-emerald-400" : "text-rose-400"}`}>
+                    {item.inStock !== false ? "● In Stock" : "○ Out of Stock"}
+                  </span>
                   <span className="text-xs text-cream/70 transition-colors group-hover:text-cream">
-                    View SKU →
+                    View Product →
                   </span>
                 </div>
               </div>

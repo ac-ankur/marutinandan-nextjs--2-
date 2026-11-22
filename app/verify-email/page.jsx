@@ -13,7 +13,7 @@ export default function VerifyEmailPage() {
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute left-1/2 top-10 h-[500px] w-[800px] -translate-x-1/2 rounded-full bg-gold/5 blur-[120px]" />
       </div>
-      <div className="relative z-10 mx-auto max-w-xl">
+      <div className="relative z-10 mx-auto max-w-5xl">
         <Suspense fallback={<div className="flex min-h-[400px] items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-2 border-pine-800 border-t-transparent" /></div>}>
           <VerifyEmailForm />
         </Suspense>

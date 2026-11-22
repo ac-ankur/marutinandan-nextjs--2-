@@ -9,6 +9,7 @@ import { getAllProducts } from "@/data/products";
 import { usePricingMode } from "@/context/PricingModeContext";
 import { useCart } from "@/context/CartContext";
 import { shop, formatApiError } from "@/lib/api";
+import ProductHeroRating from "@/components/reviews/ProductHeroRating";
 import { Search, RefreshCw, ShoppingBag, ArrowUpDown, Check, Loader2 } from "lucide-react";
 
 /* ── Shared micro-button used inside every product card ── */
@@ -204,7 +205,7 @@ export default function ProductsGrid({ initialVariant = "all" }) {
           ) : dynamicProducts.length === 0 ? (
             <div className="col-span-2 rounded-2xl border border-dashed border-ink/15 bg-cream-paper p-12 text-center text-ink/60">
               <ShoppingBag className="mx-auto h-8 w-8 text-ink/30 mb-2" />
-              <p className="font-semibold text-pine-900 text-sm">No products found in live API</p>
+              <p className="font-semibold text-pine-900 text-sm">No products found.</p>
               <p className="mt-1 text-xs text-ink/50">No catalog products match your search or category criteria.</p>
             </div>
           ) : (
@@ -282,14 +283,18 @@ function DynamicProductCard({ product }) {
   const activeVariant = variants.find((v) => v.id === selectedVariantId) || variants[0];
   const [addState, setAddState] = useState("idle"); // idle | loading | done | error
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   const activePrice = activeVariant ? activeVariant.price ?? (activeVariant.pricePaise / 100) : product.fromPrice;
   const activeMrp = activeVariant ? activeVariant.mrp ?? (activeVariant.mrpPaise / 100) : activePrice;
   const hasDiscount = activeMrp > activePrice;
   const isInStock = activeVariant?.inStock !== false;
 
-  // Reset feedback when variant switches
-  useEffect(() => { setAddState("idle"); }, [selectedVariantId]);
+  // Reset feedback & active image index when variant switches
+  useEffect(() => {
+    setAddState("idle");
+    setActiveImageIndex(0);
+  }, [selectedVariantId]);
 
   const isYellow = product.name?.toLowerCase().includes("yellow") || product.slug?.includes("yellow");
   const fallbackImage = isYellow ? "/images/yellowmustard.png" : "/images/blackmustard.png";
@@ -303,6 +308,13 @@ function DynamicProductCard({ product }) {
       : [{ url: fallbackImage, alt: product.name }];
   const activeImage = displayImages[activeImageIndex] || displayImages[0];
   const displayImage = activeImage?.url || fallbackImage;
+
+  const lightboxGallery = useMemo(() => {
+    return displayImages.map((img, i) => ({
+      src: img.url || img.src || fallbackImage,
+      label: img.alt || img.label || `${product.name} - Photo ${i + 1}`,
+    }));
+  }, [displayImages, fallbackImage, product.name]);
 
   const handleAdd = useCallback(async () => {
     if (!activeVariant?.id) return;
@@ -326,17 +338,43 @@ function DynamicProductCard({ product }) {
 
   return (
     <div className="product-card group/card relative flex flex-col overflow-hidden rounded-[28px] border border-ink/10 bg-cream-paper p-7 shadow-[0_1px_2px_rgba(20,30,20,0.04)] transition-shadow duration-300 hover:shadow-[0_18px_40px_-24px_rgba(20,40,25,0.35)]">
-      <div className="relative flex h-56 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-b from-white to-cream-paper">
-        <div className="relative h-48 w-64">
+      <div
+        className="group/frame relative flex h-56 cursor-pointer items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-b from-white to-cream-paper transition-all hover:ring-2 hover:ring-gold-deep/30"
+        onClick={() => setLightboxOpen(true)}
+        role="button"
+        tabIndex={0}
+        aria-label={`View ${product.name} image full screen`}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            setLightboxOpen(true);
+          }
+        }}
+      >
+        <div className="relative h-48 w-64 pointer-events-none">
           <SafeImage
+            key={displayImage}
             src={displayImage}
             alt={activeImage?.alt || product.name}
             fallbackHint={`${product.name} ${activeVariant?.label || ""}`}
             fill
-            className="object-contain object-center transition-transform duration-300 ease-out group-hover/card:scale-105"
+            className="object-contain object-center transition-transform duration-300 ease-out group-hover/frame:scale-105"
             sizes="(max-width: 768px) 256px, 256px"
           />
         </div>
+
+        {/* Zoom In Button Hint */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setLightboxOpen(true);
+          }}
+          aria-label="Open full screen view"
+          className="absolute bottom-3 right-3 flex h-9 w-9 items-center justify-center rounded-full bg-pine-900/85 text-cream opacity-0 shadow-md transition-all duration-200 group-hover/frame:opacity-100 hover:scale-110 hover:bg-pine-900"
+        >
+          <ZoomInIcon className="h-4 w-4" />
+        </button>
       </div>
 
       {displayImages.length > 1 && (
@@ -409,6 +447,9 @@ function DynamicProductCard({ product }) {
                   {isInStock ? "● In Stock" : "● Out of Stock"}
                 </span>
               )}
+              <div className="mt-1.5">
+                <ProductHeroRating product={product} href={`/products/${product.slug}#reviews`} compact />
+              </div>
             </div>
             <CardAddButton
               onClick={handleAdd}
@@ -427,6 +468,16 @@ function DynamicProductCard({ product }) {
           </div>
         </div>
       </div>
+
+      {lightboxOpen && (
+        <Lightbox
+          gallery={lightboxGallery}
+          startIndex={activeImageIndex}
+          onIndexChange={setActiveImageIndex}
+          alt={`${product.name} ${activeVariant?.label ? `(${activeVariant.label})` : ""}`}
+          onClose={() => setLightboxOpen(false)}
+        />
+      )}
     </div>
   );
 }
@@ -517,6 +568,13 @@ function VariantCard({ group }) {
             <div>
               <span className="font-display text-2xl text-gold-deep">₹{selected.mrp}</span>
               <span className="ml-2 text-xs text-ink/50">{selected.stockUnit}</span>
+              <div className="mt-1.5">
+                <ProductHeroRating
+                  product={selected}
+                  href={`/products/${selected.slug}#reviews`}
+                  compact
+                />
+              </div>
             </div>
             <Link
               href={`/products/${selected.slug}`}
@@ -570,7 +628,8 @@ function ImageGallery({ gallery, activeIndex, onSelectIndex, onOpenLightbox, alt
     <div className="relative z-10">
       <div
         ref={frameRef}
-        className="group/frame relative flex h-56 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-b from-white to-cream-paper"
+        onClick={onOpenLightbox}
+        className="group/frame relative flex h-56 cursor-pointer items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-b from-white to-cream-paper"
         onMouseEnter={() => setHovering(true)}
         onMouseLeave={() => setHovering(false)}
         onMouseMove={handleMouseMove}
@@ -653,7 +712,9 @@ function Lightbox({ gallery, startIndex, onIndexChange, alt, onClose }) {
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [mounted, setMounted] = useState(false);
   const dragState = useRef(null);
-  const active = gallery[index] || gallery[0];
+  const active = gallery[index] || gallery[0] || {};
+  const activeSrc = active.src || active.url;
+  const activeLabel = active.label || active.alt || `Photo ${index + 1}`;
 
   // Portal target isn't available during SSR, so only render once mounted
   // on the client — this also guarantees document.body exists.
@@ -716,7 +777,7 @@ function Lightbox({ gallery, startIndex, onIndexChange, alt, onClose }) {
     >
       <div className="flex items-center justify-between px-5 py-4">
         <span className="text-sm font-medium text-cream/80">
-          {alt} — {active.label || `Photo ${index + 1}`} ({index + 1}/{gallery.length})
+          {alt} — {activeLabel} ({index + 1}/{gallery.length})
         </span>
         <button
           type="button"
@@ -754,7 +815,7 @@ function Lightbox({ gallery, startIndex, onIndexChange, alt, onClose }) {
             transition: dragState.current ? "none" : "transform 0.2s ease-out",
           }}
         >
-          <SafeImage src={active.src} alt={alt} fallbackHint={alt} fill className="object-contain" sizes="480px" draggable={false} priority />
+          <SafeImage src={activeSrc} alt={alt} fallbackHint={alt} fill className="object-contain" sizes="480px" draggable={false} priority />
         </div>
 
         {gallery.length > 1 && (

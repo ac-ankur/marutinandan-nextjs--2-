@@ -625,7 +625,7 @@ function OrderDetailModal({ orderId, onClose, onStatusUpdated, onDownloadInvoice
                       <select
                         value={newStatus}
                         onChange={(e) => setNewStatus(e.target.value)}
-                        className="w-full rounded-lg border border-slate-300 bg-white p-2 text-xs text-slate-800 outline-none focus:ring-1 focus:ring-emerald-600"
+                        className="box-border h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-xs text-slate-800 outline-none focus:ring-1 focus:ring-emerald-600"
                         required
                       >
                         <option value="PENDING">PENDING (Pending Payment)</option>
@@ -647,7 +647,7 @@ function OrderDetailModal({ orderId, onClose, onStatusUpdated, onDownloadInvoice
                         value={trackingNumber}
                         onChange={(e) => setTrackingNumber(e.target.value)}
                         placeholder="e.g. BlueDart 987654321"
-                        className="w-full rounded-lg border border-slate-300 bg-white p-2 text-xs text-slate-800 outline-none focus:ring-1 focus:ring-emerald-600"
+                        className="box-border h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-xs text-slate-800 outline-none focus:ring-1 focus:ring-emerald-600"
                       />
                     </div>
                   </div>
@@ -695,8 +695,8 @@ function OrderDetailModal({ orderId, onClose, onStatusUpdated, onDownloadInvoice
                 {Array.isArray(order.shipments) && order.shipments.length > 0 && <div className="rounded-xl border border-slate-200 bg-slate-50 divide-y divide-slate-200">
                   {order.shipments.map((shipment, index) => (
                     <div key={shipment.id || index} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5 text-xs">
-                      <span className="font-medium text-slate-700">{shipment.courierName || shipment.provider || "Shiprocket"}</span>
-                      <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${["FAILED", "ERROR", "CANCEL_FAILED"].includes(String(shipment.status || "").toUpperCase()) ? "border-rose-200 bg-rose-50 text-rose-700" : "border-slate-200 bg-white text-slate-600"}`}>{shipment.status || "Unknown"}</span>
+                      <div><span className="font-medium text-slate-700">{shipment.courier || shipment.courierName || shipment.provider || "Shiprocket"}</span>{shipment.awb && <p className="mt-1 text-[10px] text-slate-500">AWB: {shipment.awb}</p>}</div>
+                      <div className="flex items-center gap-2"><span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${["FAILED", "ERROR", "CANCEL_FAILED"].includes(String(shipment.trackingStatus || shipment.status || "").toUpperCase()) ? "border-rose-200 bg-rose-50 text-rose-700" : "border-slate-200 bg-white text-slate-600"}`}>{shipment.trackingStatus || shipment.status || "Unknown"}</span>{shipment.trackingUrl && <a href={shipment.trackingUrl} target="_blank" rel="noreferrer" className="font-semibold text-emerald-700 underline">Track</a>}</div>
                     </div>
                   ))}
                 </div>}
@@ -785,6 +785,17 @@ function OrderDetailModal({ orderId, onClose, onStatusUpdated, onDownloadInvoice
                 </div>
               </div>
             </div>
+
+            {order.refundStatus && (
+              <section className="rounded-xl border border-indigo-200 bg-indigo-50/60 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-xs font-bold uppercase tracking-wide text-indigo-950">Refund progress</p>
+                  <span className="rounded-full border border-indigo-200 bg-white px-2.5 py-1 text-[10px] font-bold text-indigo-800">{String(order.refundStatus).replaceAll("_", " ")}</span>
+                </div>
+                {order.totalRefundedPaise != null && <p className="mt-2 text-sm font-semibold text-indigo-950">Total processed: {rupees(order.totalRefundedPaise)}</p>}
+                {(order.refunds || []).length > 0 && <div className="mt-3 divide-y divide-indigo-100 rounded-lg bg-white/80 px-3">{order.refunds.map((refund) => <div key={refund.id} className="flex flex-wrap justify-between gap-2 py-2 text-xs text-slate-600"><span>{refund.status} · {refund.createdAt ? new Date(refund.createdAt).toLocaleString("en-IN") : ""}</span><span className="font-semibold text-slate-900">{rupees(refund.amountPaise)}</span></div>)}</div>}
+              </section>
+            )}
           </div>
         )}
       </div>

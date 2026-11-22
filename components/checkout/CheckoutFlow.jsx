@@ -1291,7 +1291,7 @@ export default function CheckoutFlow() {
               Thank You for Your Order!
             </h2>
             <p className="text-xs text-ink/65">
-              Order <strong className="text-pine-950">#{createdOrder.orderNumber || createdOrder.id}</strong> has been confirmed and forwarded to our cold-press mill in Rajasthan.
+              Order <strong className="text-pine-950">#{createdOrder.orderNumber || createdOrder.id}</strong> has been confirmed .
             </p>
           </div>
 

@@ -380,9 +380,9 @@ export default function Navbar() {
           open ? "max-h-[36rem]" : "max-h-0"
         }`}
       >
-        <div className="flex flex-col gap-4 px-4 pb-6 sm:px-6">
+        <div className="flex flex-col items-center text-center gap-4 px-4 pb-6 sm:px-6">
           {visibleLinks.map((l) => (
-            <Link key={l.href} href={l.href} onClick={() => setOpen(false)} className="text-base text-ink/80">
+            <Link key={l.href} href={l.href} onClick={() => setOpen(false)} className="text-base text-ink/80 hover:text-pine-900 transition-colors font-medium">
               {l.label}
             </Link>
           ))}
